@@ -39,17 +39,19 @@ export interface PaystackVerifyResponse {
  * @param amount - Amount in kobo (multiply naira by 100)
  * @param reference - Unique transaction reference
  * @param metadata - Additional metadata
+ * @param secretKey - The localized Paystack secret key for the specific merchant
  */
 export async function initializePayment(
   email: string,
   amount: number,
   reference: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
+  secretKey?: string
 ): Promise<PaystackInitializeResponse> {
   const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      Authorization: `Bearer ${secretKey || process.env.PAYSTACK_SECRET_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -70,15 +72,17 @@ export async function initializePayment(
 /**
  * Verify a Paystack payment
  * @param reference - Transaction reference
+ * @param secretKey - The localized Paystack secret key for the specific merchant
  */
 export async function verifyPayment(
-  reference: string
+  reference: string,
+  secretKey?: string
 ): Promise<PaystackVerifyResponse> {
   const response = await fetch(
     `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
     {
       headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${secretKey || process.env.PAYSTACK_SECRET_KEY}`,
       },
     }
   )

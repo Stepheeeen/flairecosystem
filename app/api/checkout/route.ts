@@ -1,6 +1,7 @@
 import { initializePayment, generateReference } from "@/lib/paystack"
 import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
+import Company from "@/lib/models/company"
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +11,16 @@ export async function POST(request: Request) {
       return Response.json(
         { error: "Missing required fields (including companyId)", data: null },
         { status: 400 }
+      )
+    }
+
+    await dbConnect()
+
+    const company = await Company.findById(companyId)
+    if (!company) {
+      return Response.json(
+        { error: "Storefront company not found", data: null },
+        { status: 404 }
       )
     }
 
@@ -36,7 +47,8 @@ export async function POST(request: Request) {
           quantity: item.quantity,
         })),
         companyId, // Pass companyId to metadata if needed
-      }
+      },
+      company.paystackPublicKey // Dynamically inject the local merchant API key if one is set!
     )
 
     if (!paymentResponse.status) {
@@ -45,8 +57,6 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-
-    await dbConnect()
 
     await Order.create({
       reference,

@@ -25,8 +25,20 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
 
     const brandName = company?.name || "STOREFRONT"
     const theme = company?.theme || {}
+    const landingPage = company?.landingPage || {}
+
     const heroImage = theme.heroImage || "/hero-bg.jpg"
     const primaryColor = theme.primaryColor || null
+
+    const heroTitle = landingPage.heroTitle || brandName
+    const heroSubtitle = landingPage.heroSubtitle || "Curated Collections for the Discerning"
+    const heroButtonText = landingPage.heroButtonText || "Shop Collection"
+    const heroButtonLink = landingPage.heroButtonLink || getStoreUrl(companySlug, "/products")
+
+    const featuredCollectionsTitle = landingPage.featuredCollectionsTitle || "FEATURED COLLECTIONS"
+
+    const newsletterTitle = landingPage.newsletterTitle || "STAY CONNECTED"
+    const newsletterSubtitle = landingPage.newsletterSubtitle || `Subscribe for exclusive ${company?.name ? `${company.name} ` : ''}collections and early access to new arrivals.`
 
     return (
         <div style={primaryColor ? { '--theme-primary': primaryColor, '--primary': primaryColor } as React.CSSProperties : {}}>
@@ -48,14 +60,14 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
 
                     <div className="relative z-10 text-center text-white space-y-6 px-4">
                         <h1 className="text-5xl md:text-7xl font-light tracking-widest uppercase">
-                            {brandName}
+                            {heroTitle}
                         </h1>
                         <p className="text-xl md:text-2xl font-light tracking-wide">
-                            Curated Collections for the Discerning
+                            {heroSubtitle}
                         </p>
-                        <Link href={getStoreUrl(companySlug, "/products")}>
+                        <Link href={heroButtonLink}>
                             <Button size="lg" className="text-base px-8 mt-4">
-                                Shop Collection
+                                {heroButtonText}
                             </Button>
                         </Link>
                     </div>
@@ -64,8 +76,8 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
                 {/* Featured Collections */}
                 <section className="py-20 px-4">
                     <div className="max-w-7xl mx-auto">
-                        <h2 className="text-4xl font-light tracking-widest text-center mb-16">
-                            FEATURED COLLECTIONS
+                        <h2 className="text-4xl font-light tracking-widest text-center mb-16 uppercase">
+                            {featuredCollectionsTitle}
                         </h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -120,11 +132,11 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
                 {/* Newsletter Section */}
                 <section className="bg-primary text-primary-foreground py-16 px-4">
                     <div className="max-w-2xl mx-auto text-center space-y-6">
-                        <h2 className="text-3xl font-light tracking-widest">
-                            STAY CONNECTED
+                        <h2 className="text-3xl font-light tracking-widest uppercase">
+                            {newsletterTitle}
                         </h2>
                         <p className="text-lg font-light">
-                            Subscribe for exclusive {company?.name ? `${company.name} ` : ''}collections and early access to new arrivals.
+                            {newsletterSubtitle}
                         </p>
                         <div className="flex gap-2">
                             <input

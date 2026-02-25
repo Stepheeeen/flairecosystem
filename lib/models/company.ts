@@ -11,6 +11,18 @@ export interface ICompany extends Document {
         backgroundColor?: string
         heroImage?: string
     }
+    paystackPublicKey?: string
+    seoTitle?: string
+    seoDescription?: string
+    landingPage?: {
+        heroTitle?: string
+        heroSubtitle?: string
+        heroButtonText?: string
+        heroButtonLink?: string
+        featuredCollectionsTitle?: string
+        newsletterTitle?: string
+        newsletterSubtitle?: string
+    }
     status: "active" | "suspended"
     createdAt: Date
     updatedAt: Date
@@ -27,6 +39,18 @@ const CompanySchema = new Schema<ICompany>(
             primaryColor: { type: String },
             backgroundColor: { type: String },
             heroImage: { type: String },
+        },
+        paystackPublicKey: { type: String },
+        seoTitle: { type: String },
+        seoDescription: { type: String },
+        landingPage: {
+            heroTitle: { type: String },
+            heroSubtitle: { type: String },
+            heroButtonText: { type: String },
+            heroButtonLink: { type: String },
+            featuredCollectionsTitle: { type: String },
+            newsletterTitle: { type: String },
+            newsletterSubtitle: { type: String },
         },
         status: {
             type: String,
