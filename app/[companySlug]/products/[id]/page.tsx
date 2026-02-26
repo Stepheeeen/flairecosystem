@@ -7,10 +7,19 @@ import Image from "next/image"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
-import { ShoppingCart, ArrowLeft } from "lucide-react"
+import { ShoppingCart, ArrowLeft, Star } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import axios from "axios"
+import { useSession } from "next-auth/react"
+
+interface Review {
+  _id: string
+  rating: number
+  text: string
+  createdAt: string
+  userId: { name: string }
+}
 
 interface Product {
   id: string
@@ -32,13 +41,24 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string>("")
   const [quantity, setQuantity] = useState(1)
   const { addItem } = useCart()
+  const { data: session } = useSession()
+
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [rating, setRating] = useState(5)
+  const [reviewText, setReviewText] = useState("")
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`/api/products/${params.id}`)
-        const data = response.data
+        const [productRes, reviewsRes] = await Promise.all([
+          axios.get(`/api/products/${params.id}`),
+          axios.get(`/api/products/${params.id}/reviews`)
+        ])
+
+        const data = productRes.data
         setProduct(data)
+        setReviews(reviewsRes.data)
         if (data.colors?.length) setSelectedColor(data.colors[0])
         if (data.sizes?.length) setSelectedSize(data.sizes[0])
       } catch (error) {
@@ -70,6 +90,34 @@ export default function ProductDetailPage() {
     toast.success("Added to cart", {
       description: `${product.name} x${quantity}`,
     })
+  }
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!session) return toast.error("Please sign in to leave a review")
+    if (!reviewText) return
+
+    setIsSubmittingReview(true)
+    try {
+      const paramsId = params.id as string
+      const res = await axios.post(`/api/products/${paramsId}/reviews`, {
+        rating,
+        text: reviewText
+      })
+
+      // Re-fetch reviews to get the populated user name
+      const reviewsRes = await axios.get(`/api/products/${paramsId}/reviews`)
+      setReviews(reviewsRes.data)
+
+      setReviewText("")
+      setRating(5)
+      toast.success("Review submitted successfully!")
+    } catch (error: any) {
+      console.error("Failed to submit review", error)
+      toast.error(error.response?.data?.error || "Failed to submit review")
+    } finally {
+      setIsSubmittingReview(false)
+    }
   }
 
   if (isLoading) {
@@ -157,8 +205,8 @@ export default function ProductDetailPage() {
                         key={color}
                         onClick={() => setSelectedColor(color)}
                         className={`px-4 py-2 text-sm border transition-all ${selectedColor === color
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border hover:border-foreground"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:border-foreground"
                           }`}
                       >
                         {color}
@@ -180,8 +228,8 @@ export default function ProductDetailPage() {
                         key={size}
                         onClick={() => setSelectedSize(size)}
                         className={`py-3 text-sm border transition-all ${selectedSize === size
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border hover:border-foreground"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:border-foreground"
                           }`}
                       >
                         {size}
@@ -233,6 +281,82 @@ export default function ProductDetailPage() {
                     Free shipping on orders over ₦100,000. Returns accepted within 30 days.
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Reviews Section */}
+          <div className="mt-24 border-t border-border pt-16">
+            <h2 className="text-2xl font-light tracking-widest uppercase mb-12">Customer Reviews</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              {/* Review Form */}
+              <div className="col-span-1 space-y-6">
+                <h3 className="text-lg font-medium">Write a Review</h3>
+                {session ? (
+                  <form onSubmit={handleReviewSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm mb-2 text-muted-foreground">Rating</label>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              className={`h-6 w-6 transition-colors ${star <= rating ? 'fill-primary text-primary' : 'text-muted stroke-border'}`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-2 text-muted-foreground">Your Thought</label>
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="What did you like or dislike?"
+                        className="w-full border border-border bg-background p-3 text-sm min-h-[120px] focus:outline-none focus:border-primary"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isSubmittingReview}>
+                      {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="bg-secondary/30 border border-border p-6 text-center">
+                    <p className="text-sm text-muted-foreground mb-4">Please log in to share your thoughts.</p>
+                    <Link href={`/auth/signin?callbackUrl=/products/${params.id}`}>
+                      <Button variant="outline" className="w-full text-xs uppercase tracking-widest">Sign In</Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Reviews List */}
+              <div className="col-span-1 md:col-span-2 space-y-8">
+                {reviews.length === 0 ? (
+                  <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+                ) : (
+                  reviews.map((review) => (
+                    <div key={review._id} className="border-b border-border pb-6">
+                      <div className="flex items-center gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${star <= review.rating ? 'fill-primary text-primary' : 'text-muted stroke-border'}`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm font-medium mb-1">{review.userId?.name || "Verified Customer"}</p>
+                      <p className="text-xs text-muted-foreground mb-3">{new Date(review.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm leading-relaxed">{review.text}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -6,9 +6,13 @@ export interface IProduct extends Document {
   price: number
   category: "women" | "men" | "accessories"
   image: string
+  images: string[]
   sizes: string[]
   colors: string[]
   inStock: boolean
+  stockCount: number
+  discountCode?: string
+  discountPercent?: number
   companyId: mongoose.Types.ObjectId
   createdAt: Date
   updatedAt: Date
@@ -25,9 +29,13 @@ const ProductSchema = new Schema<IProduct>(
       enum: ["women", "men", "accessories"],
     },
     image: { type: String, default: "" },
+    images: [{ type: String }],
     sizes: [{ type: String }],
     colors: [{ type: String }],
     inStock: { type: Boolean, default: true },
+    stockCount: { type: Number, default: 0 },
+    discountCode: { type: String },
+    discountPercent: { type: Number, min: 0, max: 100 },
     companyId: { type: Schema.Types.ObjectId, ref: "Company", required: true },
   },
   { timestamps: true }

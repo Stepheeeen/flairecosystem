@@ -1,7 +1,9 @@
 import { verifyPayment } from "@/lib/paystack"
 import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
+import User from "@/lib/models/user"
 import crypto from "crypto"
+import { sendOrderConfirmedEmail, sendNewSaleEmail } from "@/lib/emails"
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +12,7 @@ export async function POST(request: Request) {
 
     if (!verifyWebhookSignature(body, signature)) {
       return Response.json(
-        { error: "Invalid signature" , data: null },
+        { error: "Invalid signature", data: null },
         { status: 401 }
       )
     }
@@ -25,10 +27,22 @@ export async function POST(request: Request) {
       if (verification.status && verification.data.status === "success") {
         await dbConnect()
 
-        await Order.findOneAndUpdate(
+        const order: any = await Order.findOneAndUpdate(
           { reference },
-          { status: "completed", paidAt: new Date() }
+          { status: "completed", paidAt: new Date() },
+          { new: true }
         )
+
+        if (order) {
+          // Send email to the shopper
+          await sendOrderConfirmedEmail(order.customerEmail, order.customerName, order.reference, order.totalAmount)
+
+          // Notify the Company Admin that they made a sale!
+          const admin = await User.findOne({ companyId: order.companyId, role: "admin" })
+          if (admin) {
+            await sendNewSaleEmail(admin.email, order.reference, order.totalAmount)
+          }
+        }
 
         return Response.json({ received: true })
       }
@@ -38,7 +52,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Webhook error:", error)
     return Response.json(
-      { error: "Webhook processing failed" , data: error instanceof Error ? error.message : String(error) },
+      { error: "Webhook processing failed", data: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

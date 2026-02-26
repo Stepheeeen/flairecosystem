@@ -2,6 +2,7 @@ import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import { sendOrderShippedEmail } from "@/lib/emails"
 
 export async function PATCH(
   request: Request,
@@ -43,6 +44,10 @@ export async function PATCH(
     const order = await Order.findByIdAndUpdate(id, update, { new: true })
     if (!order) {
       return Response.json({ error: "Order not found", data: null }, { status: 404 })
+    }
+
+    if (status === "shipped") {
+      await sendOrderShippedEmail(order.customerEmail, order.customerName, order.reference)
     }
 
     return Response.json(order)

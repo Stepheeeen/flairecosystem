@@ -48,18 +48,30 @@ export async function initializePayment(
   metadata?: Record<string, any>,
   secretKey?: string
 ): Promise<PaystackInitializeResponse> {
+  // Optionally extract a predetermined flat fee or percentage to the Platform Super Admin
+  const subaccount = process.env.PAYSTACK_PLATFORM_SUBACCOUNT
+  const transactionCharge = process.env.PAYSTACK_PLATFORM_FEE ? parseInt(process.env.PAYSTACK_PLATFORM_FEE, 10) : undefined
+
+  const payload: any = {
+    email,
+    amount,
+    reference,
+    metadata,
+  }
+
+  if (subaccount) {
+    payload.subaccount = subaccount
+    if (transactionCharge) payload.transaction_charge = transactionCharge
+    payload.bearer = "subaccount" // The merchant bears the Paystack processing fees
+  }
+
   const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${secretKey || process.env.PAYSTACK_SECRET_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      email,
-      amount,
-      reference,
-      metadata,
-    }),
+    body: JSON.stringify(payload),
   })
 
   if (!response.ok) {

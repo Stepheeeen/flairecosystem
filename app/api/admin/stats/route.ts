@@ -22,7 +22,10 @@ export async function GET() {
       filter.companyId = new mongoose.Types.ObjectId(session.user.companyId)
     }
 
-    const [salesAgg, orderCount, productCount, customerAgg] = await Promise.all([
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const [salesAgg, orderCount, productCount, customerAgg, historyAgg] = await Promise.all([
       Order.aggregate([
         { $match: { status: "completed", ...filter } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } },
@@ -30,13 +33,34 @@ export async function GET() {
       Order.countDocuments(filter),
       Product.countDocuments(filter),
       Order.distinct("customerEmail", filter),
+      Order.aggregate([
+        { $match: { status: "completed", createdAt: { $gte: thirtyDaysAgo }, ...filter } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            dailyRevenue: { $sum: "$totalAmount" }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ])
     ])
+
+    // Format history string for easy charting
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const revenueHistory = historyAgg.map((h: any) => {
+      const [y, m, d] = h._id.split('-')
+      return {
+        date: `${months[parseInt(m) - 1]} ${d}`,
+        revenue: h.dailyRevenue
+      }
+    })
 
     return Response.json({
       totalSales: salesAgg[0]?.total || 0,
       orderCount,
       productCount,
       customerCount: customerAgg.length,
+      revenueHistory,
     })
   } catch (error) {
     console.error("Admin stats error:", error)

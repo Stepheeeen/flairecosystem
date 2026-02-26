@@ -7,12 +7,14 @@ import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Package, ShoppingCart, Users, DollarSign, Settings } from "lucide-react"
 import axios from "axios"
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 interface Stats {
   totalSales: number
   orderCount: number
   productCount: number
   customerCount: number
+  revenueHistory?: { date: string; revenue: number }[]
 }
 
 export default function AdminDashboard() {
@@ -96,6 +98,56 @@ export default function AdminDashboard() {
             )
           })}
         </div>
+
+        {/* Revenue Chart */}
+        {!isLoading && stats?.revenueHistory && (
+          <div className="border border-border p-8 mb-12 bg-secondary/10">
+            <h2 className="text-xl font-light mb-6 tracking-widest uppercase text-muted-foreground">30-Day Revenue</h2>
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={stats.revenueHistory}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="date"
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`}
+                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "var(--background)", border: "1px solid var(--border)", borderRadius: "4px" }}
+                    formatter={(value: number) => [`₦${value.toLocaleString()}`, "Revenue"]}
+                    labelStyle={{ color: "var(--foreground)", marginBottom: "4px", fontWeight: 500 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorRevenue)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

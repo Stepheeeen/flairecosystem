@@ -16,9 +16,12 @@ interface Product {
   category: string
   description: string
   image: string
+  images: string[]
   sizes: string[]
   colors: string[]
-  inStock: boolean
+  stockCount: number
+  discountCode?: string
+  discountPercent?: number
 }
 
 const emptyForm = {
@@ -27,8 +30,12 @@ const emptyForm = {
   category: "women",
   description: "",
   image: "",
+  images: "",
   sizes: "",
   colors: "",
+  stockCount: "0",
+  discountCode: "",
+  discountPercent: "",
 }
 
 export default function AdminProductsPage() {
@@ -77,8 +84,12 @@ export default function AdminProductsPage() {
       category: formData.category,
       description: formData.description,
       image: formData.image,
+      images: formData.images ? formData.images.split(",").map((s) => s.trim()) : [],
       sizes: formData.sizes ? formData.sizes.split(",").map((s) => s.trim()) : [],
       colors: formData.colors ? formData.colors.split(",").map((s) => s.trim()) : [],
+      stockCount: Number(formData.stockCount),
+      discountCode: formData.discountCode || undefined,
+      discountPercent: formData.discountPercent ? Number(formData.discountPercent) : undefined,
     }
 
     try {
@@ -101,8 +112,12 @@ export default function AdminProductsPage() {
       category: product.category,
       description: product.description || "",
       image: product.image || "",
+      images: product.images?.join(", ") || "",
       sizes: product.sizes?.join(", ") || "",
       colors: product.colors?.join(", ") || "",
+      stockCount: product.stockCount?.toString() || "0",
+      discountCode: product.discountCode || "",
+      discountPercent: product.discountPercent?.toString() || "",
     })
     setEditingId(product._id || product.id)
     setShowForm(true)
@@ -220,6 +235,60 @@ export default function AdminProductsPage() {
                 className="bg-background border-border"
               />
 
+              {/* Advanced Inventory Fields */}
+              <div className="pt-4 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Stock Count</label>
+                  <Input
+                    type="number"
+                    name="stockCount"
+                    placeholder="Quantity in Stock"
+                    value={formData.stockCount}
+                    onChange={handleInputChange}
+                    className="bg-background border-border"
+                    min="0"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Available inventory. Will decrement automatically upon checkout.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Additional Image Gallery URLs (comma separated)</label>
+                  <Input
+                    type="text"
+                    name="images"
+                    placeholder="e.g. https://url1.jpg, https://url2.jpg"
+                    value={formData.images}
+                    onChange={handleInputChange}
+                    className="bg-background border-border"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Discount Code (Optional)</label>
+                  <Input
+                    type="text"
+                    name="discountCode"
+                    placeholder="e.g. SUMMER20"
+                    value={formData.discountCode}
+                    onChange={handleInputChange}
+                    className="bg-background border-border uppercase"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Discount Percent (%)</label>
+                  <Input
+                    type="number"
+                    name="discountPercent"
+                    placeholder="e.g. 20"
+                    value={formData.discountPercent}
+                    onChange={handleInputChange}
+                    className="bg-background border-border"
+                    min="1"
+                    max="100"
+                  />
+                </div>
+              </div>
+
               <Button type="submit" className="w-full">
                 {editingId ? "Update Product" : "Add Product"}
               </Button>
@@ -240,6 +309,9 @@ export default function AdminProductsPage() {
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-medium">
                   Category
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-medium">
+                  Stock
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-medium">
                   Actions
@@ -268,6 +340,17 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-6 py-4 text-sm capitalize">
                       {product.category}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {product.stockCount > 0 ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {product.stockCount} in stock
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          Out of stock
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm space-x-2">
                       <button

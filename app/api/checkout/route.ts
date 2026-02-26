@@ -2,6 +2,7 @@ import { initializePayment, generateReference } from "@/lib/paystack"
 import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
 import Company from "@/lib/models/company"
+import Product from "@/lib/models/product"
 
 export async function POST(request: Request) {
   try {
@@ -22,6 +23,20 @@ export async function POST(request: Request) {
         { error: "Storefront company not found", data: null },
         { status: 404 }
       )
+    }
+
+    // 1. Concurrency Check: Verify all items have sufficient stock BEFORE initializing Paystack
+    for (const item of cart) {
+      const product = await Product.findById(item.id)
+      if (!product) {
+        return Response.json({ error: `Product not found: ${item.name}`, data: null }, { status: 404 })
+      }
+      if (product.stockCount < item.quantity) {
+        return Response.json(
+          { error: `Insufficient stock for ${product.name}. Only ${product.stockCount} left.`, data: null },
+          { status: 400 }
+        )
+      }
     }
 
     const reference = generateReference()
@@ -55,6 +70,15 @@ export async function POST(request: Request) {
       return Response.json(
         { error: "Payment initialization failed", data: null },
         { status: 400 }
+      )
+    }
+
+    // 2. Decrement Stock Counts atomically since checkout has been initialized
+    for (const item of cart) {
+      await Product.findByIdAndUpdate(
+        item.id,
+        { $inc: { stockCount: -item.quantity } },
+        { new: true }
       )
     }
 

@@ -8,10 +8,16 @@ export interface IUser extends Document {
   role: "customer" | "admin" | "super_admin"
   companyId?: mongoose.Types.ObjectId
   emailVerified: boolean
-  verificationToken?: string
   verificationTokenExpiry?: Date
   resetPasswordToken?: string
   resetPasswordTokenExpiry?: Date
+  addressBook?: {
+    street: string
+    city: string
+    state: string
+    zip: string
+    isDefault: boolean
+  }[]
   createdAt: Date
   updatedAt: Date
   comparePassword(candidatePassword: string): Promise<boolean>
@@ -29,10 +35,18 @@ const UserSchema = new Schema<IUser>(
     },
     companyId: { type: Schema.Types.ObjectId, ref: "Company" },
     emailVerified: { type: Boolean, default: false },
-    verificationToken: { type: String },
     verificationTokenExpiry: { type: Date },
     resetPasswordToken: { type: String },
     resetPasswordTokenExpiry: { type: Date },
+    addressBook: [
+      {
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        state: { type: String, required: true },
+        zip: { type: String, required: true },
+        isDefault: { type: Boolean, default: false },
+      }
+    ],
   },
   { timestamps: true }
 )
