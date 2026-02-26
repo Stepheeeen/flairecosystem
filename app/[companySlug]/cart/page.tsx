@@ -17,6 +17,7 @@ export default function CartPage({ params }: { params: Promise<{ companySlug: st
   const { cart, removeItem, updateQuantity, subtotal, isLoading } = useCart()
   const [isMounted, setIsMounted] = useState(false)
   const [companyName, setCompanyName] = useState("")
+  const [companyLogo, setCompanyLogo] = useState("")
 
   useEffect(() => {
     setIsMounted(true)
@@ -26,6 +27,7 @@ export default function CartPage({ params }: { params: Promise<{ companySlug: st
         const res = await axios.get(`/api/companies/${companySlug}`)
         const data = res.data
         setCompanyName(data.name)
+        setCompanyLogo(data.logo)
       } catch (error) {
         console.error("Failed to fetch company details")
       }
@@ -36,7 +38,7 @@ export default function CartPage({ params }: { params: Promise<{ companySlug: st
   if (!isMounted || isLoading) {
     return (
       <>
-        <Navbar companySlug={companySlug} companyName={companyName} />
+        <Navbar companySlug={companySlug} companyName={companyName} companyLogo={companyLogo} />
         <div className="min-h-screen flex items-center justify-center">
           <p className="text-muted-foreground">Loading cart...</p>
         </div>
@@ -47,7 +49,7 @@ export default function CartPage({ params }: { params: Promise<{ companySlug: st
   if (cart.length === 0) {
     return (
       <>
-        <Navbar companySlug={companySlug} companyName={companyName} />
+        <Navbar companySlug={companySlug} companyName={companyName} companyLogo={companyLogo} />
         <main className="min-h-screen bg-background">
           <div className="max-w-7xl mx-auto px-4 py-12">
             <h1 className="text-4xl font-light tracking-widest mb-12">
@@ -73,7 +75,7 @@ export default function CartPage({ params }: { params: Promise<{ companySlug: st
 
   return (
     <>
-      <Navbar companySlug={companySlug} companyName={companyName} />
+      <Navbar companySlug={companySlug} companyName={companyName} companyLogo={companyLogo} />
       <main className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <h1 className="text-4xl font-light tracking-widest mb-12">

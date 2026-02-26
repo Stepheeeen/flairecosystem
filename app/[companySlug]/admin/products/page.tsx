@@ -2,10 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import Link from "next/link"
+import { AdminHeader } from "@/components/admin-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft, Trash2, Edit, X } from "lucide-react"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import axios from "axios"
 
 interface Product {
@@ -47,6 +53,10 @@ export default function AdminProductsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState(emptyForm)
 
+  const [mainImageFile, setMainImageFile] = useState<File | null>(null)
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+
   const fetchProducts = async () => {
     try {
       const response = await axios.get("/api/products")
@@ -69,6 +79,9 @@ export default function AdminProductsPage() {
 
   const resetForm = () => {
     setFormData(emptyForm)
+    setMainImageFile(null)
+    setGalleryFiles([])
+    setIsUploading(false)
     setShowForm(false)
     setEditingId(null)
   }
@@ -76,23 +89,47 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.price) return
+    if (!formData.name || !formData.price || (!formData.image && !mainImageFile)) return
 
-    const payload = {
-      name: formData.name,
-      price: Number(formData.price),
-      category: formData.category,
-      description: formData.description,
-      image: formData.image,
-      images: formData.images ? formData.images.split(",").map((s) => s.trim()) : [],
-      sizes: formData.sizes ? formData.sizes.split(",").map((s) => s.trim()) : [],
-      colors: formData.colors ? formData.colors.split(",").map((s) => s.trim()) : [],
-      stockCount: Number(formData.stockCount),
-      discountCode: formData.discountCode || undefined,
-      discountPercent: formData.discountPercent ? Number(formData.discountPercent) : undefined,
+    setIsUploading(true)
+
+    const uploadToCloudinary = async (file: File) => {
+      const data = new FormData()
+      data.append("file", file)
+      data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "vellion_products")
+      const res = await axios.post(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        data
+      )
+      return res.data.secure_url
     }
 
     try {
+      let uploadedMainImage = formData.image
+      if (mainImageFile) {
+        uploadedMainImage = await uploadToCloudinary(mainImageFile)
+      }
+
+      let finalGalleryImages = formData.images ? formData.images.split(",").map((s) => s.trim()).filter(Boolean) : []
+      if (galleryFiles.length > 0) {
+        const uploadedGallery = await Promise.all(galleryFiles.map(file => uploadToCloudinary(file)))
+        finalGalleryImages = [...finalGalleryImages, ...uploadedGallery]
+      }
+
+      const payload = {
+        name: formData.name,
+        price: Number(formData.price),
+        category: formData.category,
+        description: formData.description,
+        image: uploadedMainImage,
+        images: finalGalleryImages,
+        sizes: formData.sizes ? formData.sizes.split(",").map((s) => s.trim()) : [],
+        colors: formData.colors ? formData.colors.split(",").map((s) => s.trim()) : [],
+        stockCount: Number(formData.stockCount),
+        discountCode: formData.discountCode || undefined,
+        discountPercent: formData.discountPercent ? Number(formData.discountPercent) : undefined,
+      }
+
       if (editingId) {
         await axios.put(`/api/products/${editingId}`, payload)
       } else {
@@ -102,6 +139,8 @@ export default function AdminProductsPage() {
       fetchProducts()
     } catch (error) {
       console.error("Failed to save product:", error)
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -134,40 +173,30 @@ export default function AdminProductsPage() {
     }
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) resetForm()
+    else setShowForm(true)
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-secondary">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <Link
-              href={`/${companySlug}/admin`}
-              className="flex items-center gap-2 text-sm hover:text-primary"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Admin
-            </Link>
-            <h1 className="text-3xl font-light tracking-widest">PRODUCTS</h1>
-            <Button onClick={() => { showForm ? resetForm() : setShowForm(true) }}>
-              {showForm ? "Cancel" : "+ Add Product"}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <AdminHeader title="Products" backLink={`/${companySlug}/admin`} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Add/Edit Product Form */}
-        {showForm && (
-          <div className="border border-border p-8 mb-12 bg-muted">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-light">
+        <div className="flex justify-end mb-6">
+          <Button onClick={() => { showForm ? resetForm() : setShowForm(true) }}>
+            {showForm ? "Cancel" : "+ Add Product"}
+          </Button>
+        </div>
+        {/* Add/Edit Product Form Slider */}
+        <Sheet open={showForm} onOpenChange={handleOpenChange}>
+          <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto px-4 pb-4">
+            <SheetHeader className="mb-6">
+              <SheetTitle className="text-xl font-light">
                 {editingId ? "Edit Product" : "Add New Product"}
-              </h2>
-              <button onClick={resetForm}>
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+              </SheetTitle>
+            </SheetHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 type="text"
@@ -208,14 +237,33 @@ export default function AdminProductsPage() {
                 className="w-full px-3 py-2 bg-background border border-border rounded text-sm focus:outline-none min-h-[80px]"
               />
 
-              <Input
-                type="text"
-                name="image"
-                placeholder="Image URL"
-                value={formData.image}
-                onChange={handleInputChange}
-                className="bg-background border-border"
-              />
+              <div>
+                <label className="block text-sm font-medium mb-1">Main Product Image <span className="text-muted-foreground font-normal">(Required)</span></label>
+                {(formData.image || mainImageFile) ? (
+                  <div className="relative inline-block mt-2">
+                    <img src={mainImageFile ? URL.createObjectURL(mainImageFile) : formData.image} alt="Main" className="h-32 w-32 object-cover border border-border rounded-sm" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMainImageFile(null)
+                        setFormData({ ...formData, image: "" })
+                      }}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="w-full h-32 border-2 border-dashed border-border rounded-sm flex items-center justify-center flex-col text-muted-foreground hover:bg-secondary/50 hover:border-primary transition-colors hover:text-primary cursor-pointer">
+                    <span className="text-sm font-medium">Click to select Main Image</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setMainImageFile(e.target.files[0])
+                      }
+                    }} />
+                  </label>
+                )}
+              </div>
 
               <Input
                 type="text"
@@ -251,16 +299,55 @@ export default function AdminProductsPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">Available inventory. Will decrement automatically upon checkout.</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Additional Image Gallery URLs (comma separated)</label>
-                  <Input
-                    type="text"
-                    name="images"
-                    placeholder="e.g. https://url1.jpg, https://url2.jpg"
-                    value={formData.images}
-                    onChange={handleInputChange}
-                    className="bg-background border-border"
-                  />
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Additional Image Gallery <span className="text-muted-foreground font-normal">(Optional)</span></label>
+
+                  <div className="flex flex-wrap gap-4 mt-2">
+                    {/* Cloud URLs */}
+                    {formData.images.split(",").filter(Boolean).map((imgUrl, idx) => (
+                      <div key={`cloud-${idx}`} className="relative inline-block">
+                        <img src={imgUrl.trim()} alt={`Gallery ${idx}`} className="h-24 w-24 object-cover border border-border rounded-sm" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const arr = formData.images.split(",").map(s => s.trim()).filter(Boolean)
+                            arr.splice(idx, 1)
+                            setFormData({ ...formData, images: arr.join(", ") })
+                          }}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Local Files Preview */}
+                    {galleryFiles.map((file, idx) => (
+                      <div key={`local-${idx}`} className="relative inline-block">
+                        <img src={URL.createObjectURL(file)} alt={`New Gallery ${idx}`} className="h-24 w-24 object-cover border border-border rounded-sm" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newFiles = [...galleryFiles]
+                            newFiles.splice(idx, 1)
+                            setGalleryFiles(newFiles)
+                          }}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    <label className="h-24 w-24 border-2 border-dashed border-border rounded-sm flex items-center justify-center text-muted-foreground hover:bg-secondary/50 hover:border-primary transition-colors hover:text-primary cursor-pointer">
+                      <span className="text-2xl font-light">+</span>
+                      <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => {
+                        if (e.target.files) {
+                          setGalleryFiles(prev => [...prev, ...Array.from(e.target.files as FileList)])
+                        }
+                      }} />
+                    </label>
+                  </div>
                 </div>
 
                 <div>
@@ -289,12 +376,12 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full">
-                {editingId ? "Update Product" : "Add Product"}
+              <Button type="submit" className="w-full mt-8" disabled={isUploading}>
+                {isUploading ? "Uploading & Saving..." : (editingId ? "Update Product" : "Add Product")}
               </Button>
             </form>
-          </div>
-        )}
+          </SheetContent>
+        </Sheet>
 
         {/* Products Table */}
         <div className="border border-border overflow-hidden">

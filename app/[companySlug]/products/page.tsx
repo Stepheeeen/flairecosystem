@@ -22,6 +22,7 @@ interface Company {
   id: string
   name: string
   slug: string
+  logo?: string
 }
 
 function ProductsContent({ companySlug }: { companySlug: string }) {
@@ -139,7 +140,7 @@ function ProductsContent({ companySlug }: { companySlug: string }) {
 
   return (
     <>
-      <Navbar companySlug={companySlug} companyName={company?.name} />
+      <Navbar companySlug={companySlug} companyName={company?.name} companyLogo={company?.logo} />
       <main className="min-h-screen bg-background">
         {/* Header */}
         <div className="border-b border-border">
@@ -187,8 +188,8 @@ function ProductsContent({ companySlug }: { companySlug: string }) {
                       key={cat.value}
                       onClick={() => handleCategoryChange(cat.value)}
                       className={`block w-full text-left px-3 py-2 text-sm rounded-sm transition-all duration-300 ${selectedCategory === cat.value
-                          ? "bg-primary text-primary-foreground font-medium translate-x-1"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        ? "bg-primary text-primary-foreground font-medium translate-x-1"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                         }`}
                     >
                       {cat.label}

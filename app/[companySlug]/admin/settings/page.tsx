@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { AdminHeader } from "@/components/admin-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -16,6 +16,7 @@ export default function AdminSettingsPage() {
     const [formData, setFormData] = useState({
         name: "",
         slug: "",
+        logo: "",
         customDomain: "",
         subdomain: "",
         theme: {
@@ -38,6 +39,8 @@ export default function AdminSettingsPage() {
     })
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
+    const [heroImageFile, setHeroImageFile] = useState<File | null>(null)
+    const [logoFile, setLogoFile] = useState<File | null>(null)
 
     useEffect(() => {
         const fetchSessionAndCompany = async () => {
@@ -51,6 +54,7 @@ export default function AdminSettingsPage() {
                         setFormData({
                             name: company.name || "",
                             slug: company.slug || "",
+                            logo: company.logo || "",
                             customDomain: company.customDomain || "",
                             subdomain: company.subdomain || "",
                             theme: {
@@ -113,7 +117,57 @@ export default function AdminSettingsPage() {
 
             if (!session?.user?.companyId) throw new Error("No company found for user")
 
-            await axios.put(`/api/companies/${session.user.companyId}`, formData)
+            let finalHeroImage = formData.theme.heroImage
+            let finalLogo = formData.logo
+
+            const uploadToCloudinary = async (file: File) => {
+                const data = new FormData()
+                data.append("file", file)
+                data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "vellion_products")
+                const res = await axios.post(
+                    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                    data
+                )
+                return res.data.secure_url
+            }
+
+            const uploadPromises = []
+
+            if (heroImageFile) {
+                uploadPromises.push(
+                    uploadToCloudinary(heroImageFile).then(url => { finalHeroImage = url })
+                )
+            }
+
+            if (logoFile) {
+                uploadPromises.push(
+                    uploadToCloudinary(logoFile).then(url => { finalLogo = url })
+                )
+            }
+
+            if (uploadPromises.length > 0) {
+                await Promise.all(uploadPromises)
+            }
+
+            const payloadToSave = {
+                ...formData,
+                logo: finalLogo,
+                theme: {
+                    ...formData.theme,
+                    heroImage: finalHeroImage
+                }
+            }
+
+            await axios.put(`/api/companies/${session.user.companyId}`, payloadToSave)
+
+            // Sync local state with new URL
+            setFormData(prev => ({
+                ...prev,
+                logo: finalLogo,
+                theme: { ...prev.theme, heroImage: finalHeroImage }
+            }))
+            setHeroImageFile(null)
+            setLogoFile(null)
 
             toast.success("Settings updated successfully")
         } catch (error) {
@@ -126,22 +180,7 @@ export default function AdminSettingsPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="border-b border-border bg-secondary">
-                <div className="max-w-7xl mx-auto px-4 py-6">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href={`/${companySlug}/admin`}
-                            className="flex items-center gap-2 text-sm hover:text-primary"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Back
-                        </Link>
-                        <h1 className="text-3xl font-light tracking-widest border-l pl-4 border-border">
-                            COMPANY SETTINGS
-                        </h1>
-                    </div>
-                </div>
-            </div>
+            <AdminHeader title="Settings" backLink={`/${companySlug}/admin`} />
 
             <div className="max-w-4xl mx-auto px-4 py-12">
                 {isLoading ? (
@@ -192,7 +231,43 @@ export default function AdminSettingsPage() {
                                                 </p>
                                             </div>
 
-                                            <div>
+                                            <div className="border-t border-border pt-6 pb-2">
+                                                <label className="block text-sm font-medium mb-1">Company Logo</label>
+                                                {(formData.logo || logoFile) ? (
+                                                    <div className="relative inline-block mt-2">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={logoFile ? URL.createObjectURL(logoFile) : formData.logo}
+                                                            alt="Logo Preview"
+                                                            className="h-24 w-24 object-contain bg-muted border border-border rounded-sm p-2"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setLogoFile(null)
+                                                                setFormData(prev => ({ ...prev, logo: "" }))
+                                                            }}
+                                                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <label className="mt-2 h-24 w-24 border-2 border-dashed border-border rounded-sm flex items-center justify-center flex-col text-muted-foreground hover:bg-secondary/50 hover:border-primary transition-colors hover:text-primary cursor-pointer leading-tight text-center overflow-hidden">
+                                                        <span className="text-xs font-medium px-2">Upload Logo</span>
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                            if (e.target.files?.[0]) {
+                                                                setLogoFile(e.target.files[0])
+                                                            }
+                                                        }} />
+                                                    </label>
+                                                )}
+                                                <p className="text-xs text-muted-foreground mt-2 max-w-lg">
+                                                    Displays in the main navigation bar. We recommend a transparent PNG/SVG.
+                                                </p>
+                                            </div>
+
+                                            <div className="border-t border-border pt-4">
                                                 <label className="block text-sm font-medium mb-1">Custom Domain (Optional)</label>
                                                 <Input
                                                     name="customDomain"
@@ -252,30 +327,43 @@ export default function AdminSettingsPage() {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-1">Customer Hero Image URL</label>
-                                                <Input
-                                                    name="theme.heroImage"
-                                                    value={formData.theme.heroImage}
-                                                    onChange={handleChange}
-                                                    className="bg-background border-border max-w-lg"
-                                                    placeholder="https://example.com/my-hero-image.jpg"
-                                                />
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    The background image displayed at the top of your storefront.
-                                                </p>
-                                                {formData.theme.heroImage && (
-                                                    <div className="mt-4 relative h-40 w-full max-w-lg rounded-md overflow-hidden border border-border">
+                                                <label className="block text-sm font-medium mb-1">Customer Hero Image</label>
+                                                {(formData.theme.heroImage || heroImageFile) ? (
+                                                    <div className="relative inline-block mt-2 w-full max-w-lg">
                                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
-                                                            src={formData.theme.heroImage}
+                                                            src={heroImageFile ? URL.createObjectURL(heroImageFile) : formData.theme.heroImage}
                                                             alt="Hero Preview"
-                                                            className="object-cover w-full h-full"
+                                                            className="h-40 w-full object-cover border border-border rounded-sm"
                                                             onError={(e) => {
                                                                 ; (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f3f4f6"/><text x="50" y="50" font-family="sans-serif" font-size="12" text-anchor="middle" alignment-baseline="middle" fill="%239ca3af">Invalid Image URL</text></svg>'
                                                             }}
                                                         />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setHeroImageFile(null)
+                                                                setFormData(prev => ({ ...prev, theme: { ...prev.theme, heroImage: "" } }))
+                                                            }}
+                                                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                                        </button>
                                                     </div>
+                                                ) : (
+                                                    <label className="mt-2 w-full max-w-lg h-40 border-2 border-dashed border-border rounded-sm flex items-center justify-center flex-col text-muted-foreground hover:bg-secondary/50 hover:border-primary transition-colors hover:text-primary cursor-pointer">
+                                                        <span className="text-sm font-medium">Click to select Hero Image</span>
+                                                        <span className="text-xs opacity-70 mt-1">Uploads safely to Cloudinary</span>
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                            if (e.target.files?.[0]) {
+                                                                setHeroImageFile(e.target.files[0])
+                                                            }
+                                                        }} />
+                                                    </label>
                                                 )}
+                                                <p className="text-xs text-muted-foreground mt-2 max-w-lg">
+                                                    The broad background image displayed at the very top of your storefront.
+                                                </p>
                                             </div>
                                         </div>
                                     </div>

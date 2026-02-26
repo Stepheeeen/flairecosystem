@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
@@ -22,6 +22,15 @@ export default function SignUpPage() {
     password: "",
     confirmPassword: "",
   })
+  const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string } | null>(null)
+
+  useEffect(() => {
+    if (companySlug) {
+      axios.get(`/api/companies/${companySlug}`)
+        .then(res => setCompanyContext({ id: res.data._id || res.data.id, name: res.data.name, logo: res.data.logo }))
+        .catch(err => console.error(err))
+    }
+  }, [companySlug])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -68,7 +77,7 @@ export default function SignUpPage() {
 
   return (
     <>
-      <Navbar companySlug={companySlug} companyName="STOREFRONT" />
+      <Navbar companySlug={companySlug} companyName={companyContext?.name || "STOREFRONT"} companyLogo={companyContext?.logo} />
       <main className="min-h-screen bg-background flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
           <div className="space-y-8">

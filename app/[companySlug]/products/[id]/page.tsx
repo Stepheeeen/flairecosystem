@@ -34,8 +34,9 @@ interface Product {
 }
 
 export default function ProductDetailPage() {
-  const params = useParams()
+  const { companySlug, id } = useParams()
   const [product, setProduct] = useState<Product | null>(null)
+  const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [selectedSize, setSelectedSize] = useState<string>("")
   const [selectedColor, setSelectedColor] = useState<string>("")
@@ -51,14 +52,20 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const [productRes, reviewsRes] = await Promise.all([
-          axios.get(`/api/products/${params.id}`),
-          axios.get(`/api/products/${params.id}/reviews`)
+        const [productRes, reviewsRes, compRes] = await Promise.all([
+          axios.get(`/api/products/${id}`),
+          axios.get(`/api/products/${id}/reviews`),
+          axios.get(`/api/companies/${companySlug}`)
         ])
 
         const data = productRes.data
         setProduct(data)
         setReviews(reviewsRes.data)
+        setCompanyContext({
+          id: compRes.data._id || compRes.data.id,
+          name: compRes.data.name,
+          logo: compRes.data.logo
+        })
         if (data.colors?.length) setSelectedColor(data.colors[0])
         if (data.sizes?.length) setSelectedSize(data.sizes[0])
       } catch (error) {
@@ -68,10 +75,10 @@ export default function ProductDetailPage() {
       }
     }
 
-    if (params.id) {
+    if (id && companySlug) {
       fetchProduct()
     }
-  }, [params.id])
+  }, [id, companySlug])
 
   const handleAddToCart = () => {
     if (!product) return
@@ -99,14 +106,13 @@ export default function ProductDetailPage() {
 
     setIsSubmittingReview(true)
     try {
-      const paramsId = params.id as string
-      const res = await axios.post(`/api/products/${paramsId}/reviews`, {
+      const res = await axios.post(`/api/products/${id}/reviews`, {
         rating,
         text: reviewText
       })
 
       // Re-fetch reviews to get the populated user name
-      const reviewsRes = await axios.get(`/api/products/${paramsId}/reviews`)
+      const reviewsRes = await axios.get(`/api/products/${id}/reviews`)
       setReviews(reviewsRes.data)
 
       setReviewText("")
@@ -123,7 +129,7 @@ export default function ProductDetailPage() {
   if (isLoading) {
     return (
       <>
-        <Navbar />
+        <Navbar companySlug={companySlug as string} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
         <div className="min-h-screen flex items-center justify-center">
           <p className="text-muted-foreground">Loading product...</p>
         </div>
@@ -134,11 +140,11 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <>
-        <Navbar />
+        <Navbar companySlug={companySlug as string} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <p className="text-muted-foreground mb-4">Product not found</p>
-            <Link href="/products">
+            <Link href={getStoreUrl(companySlug as string, "/products")}>
               <Button>Back to Shop</Button>
             </Link>
           </div>
@@ -149,11 +155,11 @@ export default function ProductDetailPage() {
 
   return (
     <>
-      <Navbar />
+      <Navbar companySlug={companySlug as string} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
       <main className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Back Button */}
-          <Link href="/products" className="inline-flex items-center gap-2 mb-8 text-sm hover:text-primary transition-colors">
+          <Link href={getStoreUrl(companySlug as string, "/products")} className="inline-flex items-center gap-2 mb-8 text-sm hover:text-primary transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Shop
           </Link>
@@ -329,7 +335,7 @@ export default function ProductDetailPage() {
                 ) : (
                   <div className="bg-secondary/30 border border-border p-6 text-center">
                     <p className="text-sm text-muted-foreground mb-4">Please log in to share your thoughts.</p>
-                    <Link href={`/auth/signin?callbackUrl=/products/${params.id}`}>
+                    <Link href={getStoreUrl(companySlug as string, `/auth/signin?callbackUrl=/products/${id}`)}>
                       <Button variant="outline" className="w-full text-xs uppercase tracking-widest">Sign In</Button>
                     </Link>
                   </div>

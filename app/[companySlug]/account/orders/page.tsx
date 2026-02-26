@@ -18,6 +18,7 @@ export default function CustomerOrdersPage({ params }: { params: Promise<{ compa
 
     const [orders, setOrders] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string } | null>(null)
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -31,6 +32,8 @@ export default function CustomerOrdersPage({ params }: { params: Promise<{ compa
                 // We need the companyId to fetch the right orders for this storefront
                 const compRes = await axios.get(`/api/companies/${companySlug}`)
                 const companyId = compRes.data._id || compRes.data.id
+
+                setCompanyContext({ id: companyId, name: compRes.data.name, logo: compRes.data.logo })
 
                 if (companyId) {
                     const ordersRes = await axios.get(`/api/account/orders?companyId=${companyId}`)
@@ -51,7 +54,7 @@ export default function CustomerOrdersPage({ params }: { params: Promise<{ compa
     if (status === "loading" || isLoading) {
         return (
             <>
-                <Navbar companySlug={companySlug} />
+                <Navbar companySlug={companySlug} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
                 <div className="min-h-screen flex items-center justify-center">Loading orders...</div>
             </>
         )
@@ -81,7 +84,7 @@ export default function CustomerOrdersPage({ params }: { params: Promise<{ compa
 
     return (
         <>
-            <Navbar companySlug={companySlug} />
+            <Navbar companySlug={companySlug} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
             <main className="min-h-screen bg-background pb-20">
                 <div className="border-b border-border bg-secondary">
                     <div className="max-w-4xl mx-auto px-4 py-8">

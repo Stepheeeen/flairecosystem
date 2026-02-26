@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { AdminHeader } from "@/components/admin-header"
 import axios from "axios"
 
 interface Order {
@@ -73,22 +73,7 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-secondary">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <Link
-              href={`/${companySlug}/admin`}
-              className="flex items-center gap-2 text-sm hover:text-primary"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Admin
-            </Link>
-            <h1 className="text-3xl font-light tracking-widest">ORDERS</h1>
-            <div className="w-20" />
-          </div>
-        </div>
-      </div>
+      <AdminHeader title="Orders" backLink={`/${companySlug}/admin`} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">

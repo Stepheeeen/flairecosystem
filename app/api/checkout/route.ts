@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
 import Company from "@/lib/models/company"
 import Product from "@/lib/models/product"
+import Notification from "@/lib/models/notification"
 
 export async function POST(request: Request) {
   try {
@@ -75,11 +76,22 @@ export async function POST(request: Request) {
 
     // 2. Decrement Stock Counts atomically since checkout has been initialized
     for (const item of cart) {
-      await Product.findByIdAndUpdate(
+      const updatedProduct = await Product.findByIdAndUpdate(
         item.id,
         { $inc: { stockCount: -item.quantity } },
         { new: true }
       )
+
+      if (updatedProduct && updatedProduct.stockCount <= 5) {
+        // Create an In-App Notification for Low Stock
+        await Notification.create({
+          companyId,
+          title: "Low Stock Alert",
+          message: `${updatedProduct.name} is running low on inventory. Only ${updatedProduct.stockCount} remaining.`,
+          type: "STOCK",
+          link: `/${company.slug}/admin/products`
+        })
+      }
     }
 
     await Order.create({

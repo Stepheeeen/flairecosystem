@@ -12,9 +12,10 @@ import { CartSheet } from "./cart-sheet"
 interface NavbarProps {
   companySlug?: string
   companyName?: string
+  companyLogo?: string
 }
 
-export function Navbar({ companySlug, companyName }: NavbarProps) {
+export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const router = useRouter()
@@ -43,7 +44,12 @@ export function Navbar({ companySlug, companyName }: NavbarProps) {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href={basePath || "/"} className="flex items-center">
-            <span className="text-xl font-light tracking-widest">{brandName}</span>
+            {companyLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={companyLogo} alt={brandName} className="h-8 w-auto object-contain" />
+            ) : (
+              <span className="text-xl font-light tracking-widest">{brandName}</span>
+            )}
           </Link>
 
           {/* Desktop Navigation */}

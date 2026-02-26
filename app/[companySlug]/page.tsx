@@ -42,7 +42,7 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
 
     return (
         <div style={primaryColor ? { '--theme-primary': primaryColor, '--primary': primaryColor } as React.CSSProperties : {}}>
-            <Navbar companySlug={companySlug} companyName={company?.name} />
+            <Navbar companySlug={companySlug} companyName={company?.name} companyLogo={company?.logo} />
             <main className="min-h-screen bg-background">
                 {/* Hero Section */}
                 <section className="relative h-screen flex items-center justify-center overflow-hidden bg-secondary">

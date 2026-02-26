@@ -19,9 +19,23 @@ export default function CustomerAccountDashboard({ params }: { params: Promise<{
     const router = useRouter()
 
     const [profile, setProfile] = useState<any>(null)
+    const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string } | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [showAddressForm, setShowAddressForm] = useState(false)
     const [addressForm, setAddressForm] = useState({ street: "", city: "", state: "", zip: "" })
+
+    useEffect(() => {
+        const fetchCompany = async () => {
+            try {
+                const res = await axios.get(`/api/companies/${companySlug}`)
+                const data = res.data
+                setCompanyContext({ id: data._id || data.id, name: data.name, logo: data.logo })
+            } catch (error) {
+                console.error("Failed to fetch company details")
+            }
+        }
+        fetchCompany()
+    }, [companySlug])
 
     useEffect(() => {
         if (session) {
@@ -34,7 +48,7 @@ export default function CustomerAccountDashboard({ params }: { params: Promise<{
         }
     }, [session, status])
 
-    if (status === "loading" || (session && isLoading)) {
+    if (status === "loading" || (session && isLoading) || !companyContext) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>
     }
 
@@ -74,7 +88,7 @@ export default function CustomerAccountDashboard({ params }: { params: Promise<{
 
     return (
         <>
-            <Navbar companySlug={companySlug} companyName="STOREFRONT" />
+            <Navbar companySlug={companySlug} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
             <main className="min-h-screen bg-background">
                 <div className="border-b border-border bg-secondary">
                     <div className="max-w-7xl mx-auto px-4 py-8">

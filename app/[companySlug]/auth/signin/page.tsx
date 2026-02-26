@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, useParams } from "next/navigation"
 import { Navbar } from "@/components/navbar"
+import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/password-input"
@@ -130,9 +131,21 @@ function SignInForm() {
 }
 
 export default function SignInPage() {
+  const params = useParams()
+  const companySlug = params?.companySlug as string
+  const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string } | null>(null)
+
+  useEffect(() => {
+    if (companySlug) {
+      axios.get(`/api/companies/${companySlug}`)
+        .then(res => setCompanyContext({ id: res.data._id || res.data.id, name: res.data.name, logo: res.data.logo }))
+        .catch(err => console.error(err))
+    }
+  }, [companySlug])
+
   return (
     <>
-      <Navbar />
+      <Navbar companySlug={companySlug} companyName={companyContext?.name || "STOREFRONT"} companyLogo={companyContext?.logo} />
       <main className="min-h-screen bg-background flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
           <Suspense fallback={<div>Loading...</div>}>

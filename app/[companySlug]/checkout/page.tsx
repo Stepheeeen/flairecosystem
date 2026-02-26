@@ -23,7 +23,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
   const { cart, subtotal, clearCart } = useCart()
   const [isLoading, setIsLoading] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const [companyContext, setCompanyContext] = useState<{ id: string, name: string } | null>(null)
+  const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string } | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -43,7 +43,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
       try {
         const res = await axios.get(`/api/companies/${companySlug}`)
         const data = res.data
-        setCompanyContext({ id: data._id || data.id, name: data.name })
+        setCompanyContext({ id: data._id || data.id, name: data.name, logo: data.logo })
       } catch (error) {
         console.error("Failed to fetch company details")
       }
@@ -54,7 +54,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
   if (!isMounted || cart.length === 0 || !companyContext) {
     return (
       <>
-        <Navbar companySlug={companySlug} companyName={companyContext?.name} />
+        <Navbar companySlug={companySlug} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
         <div className="min-h-screen flex items-center justify-center">
           {!cart.length && isMounted ? (
             <div className="text-center">
@@ -124,7 +124,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
 
   return (
     <>
-      <Navbar companySlug={companySlug} companyName={companyContext?.name} />
+      <Navbar companySlug={companySlug} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
       <main className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <Link

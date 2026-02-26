@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { signOut } from "next-auth/react"
+import { AdminHeader } from "@/components/admin-header"
 import { Button } from "@/components/ui/button"
 import { Package, ShoppingCart, Users, DollarSign, Settings } from "lucide-react"
 import axios from "axios"
@@ -63,17 +63,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-secondary">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-light tracking-widest">ADMIN</h1>
-            <Button variant="outline" onClick={() => signOut({ callbackUrl: "/" })}>
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </div>
+      <AdminHeader title="Admin" />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">

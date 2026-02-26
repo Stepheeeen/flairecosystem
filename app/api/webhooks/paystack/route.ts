@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
 import User from "@/lib/models/user"
 import crypto from "crypto"
+import Notification from "@/lib/models/notification"
 import { sendOrderConfirmedEmail, sendNewSaleEmail } from "@/lib/emails"
 
 export async function POST(request: Request) {
@@ -42,6 +43,15 @@ export async function POST(request: Request) {
           if (admin) {
             await sendNewSaleEmail(admin.email, order.reference, order.totalAmount)
           }
+
+          // Create an In-App Notification for the Store Admin
+          await Notification.create({
+            companyId: order.companyId,
+            title: "New Order Received",
+            message: `Order #${order._id.toString().slice(-6)} for ₦${order.totalAmount.toLocaleString()} was just paid by ${order.customerEmail}.`,
+            type: "ORDER",
+            link: `/${order.companyId}/admin/orders`
+          })
         }
 
         return Response.json({ received: true })
