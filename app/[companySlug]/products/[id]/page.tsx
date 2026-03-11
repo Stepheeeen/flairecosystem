@@ -3,7 +3,7 @@ import { getStoreUrl } from "@/lib/utils"
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import Image from "next/image"
+import { SafeImage } from "@/components/safe-image"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
@@ -167,7 +167,7 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Product Image */}
             <div className="bg-secondary flex items-center justify-center aspect-square">
-              <Image
+              <SafeImage
                 src={product.image}
                 alt={product.name}
                 width={600}

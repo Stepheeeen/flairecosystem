@@ -1,7 +1,7 @@
 "use client"
 import { getStoreUrl } from "@/lib/utils"
 
-import Image from "next/image"
+import { SafeImage } from "./safe-image"
 import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -47,7 +47,7 @@ export function ProductCard({ product, companySlug }: ProductCardProps) {
     <Link href={productLink}>
       <div className="group cursor-pointer">
         <div className="relative overflow-hidden bg-secondary mb-4">
-          <Image
+          <SafeImage
             src={product.image || "/placeholder.png"}
             alt={product.name}
             width={400}

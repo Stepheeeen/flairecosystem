@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DollarSign, ShoppingCart, Building2, TrendingUp, Eye, Trash2 } from "lucide-react"
+import { DollarSign, ShoppingCart, Building2, TrendingUp, Eye, Trash2, X } from "lucide-react"
 import axios from "axios"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import Link from "next/link"
@@ -18,6 +18,8 @@ export default function SuperAdminDashboard() {
     const [isSavingSettings, setIsSavingSettings] = useState(false)
     const [newCompanyName, setNewCompanyName] = useState("")
     const [newCompanySlug, setNewCompanySlug] = useState("")
+    const [logoPreview, setLogoPreview] = useState("")
+    const [logoFile, setLogoFile] = useState<File | null>(null)
     const [adminEmail, setAdminEmail] = useState("")
     const [adminPassword, setAdminPassword] = useState("")
     const [isLoading, setIsLoading] = useState(true)
@@ -48,15 +50,30 @@ export default function SuperAdminDashboard() {
         if (!newCompanyName || !newCompanySlug) return
 
         try {
+            let logoUrl = ""
+            if (logoFile) {
+                const data = new FormData()
+                data.append("file", logoFile)
+                data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "flair_products")
+                const uploadRes = await axios.post(
+                    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                    data
+                )
+                logoUrl = uploadRes.data.secure_url
+            }
+
             const res = await axios.post("/api/companies", {
                 name: newCompanyName,
                 slug: newCompanySlug,
+                logo: logoUrl || undefined,
                 adminEmail: adminEmail || undefined,
                 adminPassword: adminPassword || undefined
             })
             setCompanies([res.data, ...companies])
             setNewCompanyName("")
             setNewCompanySlug("")
+            setLogoPreview("")
+            setLogoFile(null)
             setAdminEmail("")
             setAdminPassword("")
         } catch (error: any) {
@@ -324,6 +341,40 @@ export default function SuperAdminDashboard() {
                                 value={newCompanySlug}
                                 onChange={(e) => setNewCompanySlug(e.target.value)}
                             />
+                            <div className="space-y-2">
+                                <label className="text-xs text-muted-foreground">Store Logo (Optional)</label>
+                                <div className="flex items-center gap-4">
+                                    {logoPreview ? (
+                                        <div className="relative h-12 w-12 border border-border rounded-md overflow-hidden bg-muted p-1">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={logoPreview} alt="Preview" className="h-full w-full object-contain" />
+                                            <button
+                                                onClick={() => { setLogoPreview(""); setLogoFile(null) }}
+                                                className="absolute -top-1 -right-1 bg-destructive text-white rounded-full p-0.5"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="h-12 w-12 border border-dashed border-border rounded-md flex items-center justify-center cursor-pointer hover:bg-secondary/50">
+                                            <Building2 className="w-5 h-5 text-muted-foreground" />
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0]
+                                                    if (file) {
+                                                        setLogoFile(file)
+                                                        setLogoPreview(URL.createObjectURL(file))
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    )}
+                                    <span className="text-xs text-muted-foreground">Upload brand logo</span>
+                                </div>
+                            </div>
                             <div className="pt-2 border-t border-border mt-2">
                                 <p className="text-xs text-muted-foreground mb-2">Initial Admin Account (Optional)</p>
                                 <Input

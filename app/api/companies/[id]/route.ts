@@ -63,7 +63,7 @@ export async function PUT(
         }
 
         await dbConnect()
-        const { name, slug, customDomain, subdomain, theme, paystackPublicKey, seoTitle, seoDescription, landingPage } = await request.json()
+        const { name, slug, logo, customDomain, subdomain, theme, paystackPublicKey, seoTitle, seoDescription, landingPage } = await request.json()
 
         if (!name || !slug) {
             return Response.json({ error: "Name and slug are required", data: null }, { status: 400 })
@@ -80,7 +80,7 @@ export async function PUT(
 
         const company = await Company.findByIdAndUpdate(
             id,
-            { name, slug, customDomain, subdomain, theme, paystackPublicKey, seoTitle, seoDescription, landingPage },
+            { name, slug, logo, customDomain, subdomain, theme, paystackPublicKey, seoTitle, seoDescription, landingPage },
             { new: true, runValidators: true }
         )
 

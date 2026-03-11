@@ -3,7 +3,7 @@ import { getStoreUrl } from "@/lib/utils"
 
 import { useEffect, useState, use } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { SafeImage } from "@/components/safe-image"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Preloader } from "@/components/preloader"
@@ -89,8 +89,8 @@ export default function CartPage({ params }: { params: Promise<{ companySlug: st
                   className="flex gap-6 border-b border-border pb-8"
                 >
                   <div className="w-24 h-32 flex-shrink-0 bg-secondary">
-                    <Image
-                      src={item.image}
+                    <SafeImage
+                      src={item.image || ""}
                       alt={item.name}
                       width={96}
                       height={128}

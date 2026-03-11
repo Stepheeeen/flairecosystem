@@ -11,7 +11,7 @@ import {
     SheetTrigger,
     SheetFooter,
 } from "@/components/ui/sheet"
-import Image from "next/image"
+import { SafeImage } from "./safe-image"
 import Link from "next/link"
 import { getStoreUrl } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -129,7 +129,7 @@ export function CartSheet({ companySlug }: { companySlug?: string }) {
                                 {/* Image */}
                                 <div className="relative h-24 w-20 bg-muted rounded-sm overflow-hidden flex-shrink-0 border border-border/30">
                                     {item.image ? (
-                                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                        <SafeImage src={item.image} alt={item.name} fill className="object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-secondary flex items-center justify-center">
                                             <ShoppingCart className="h-6 w-6 text-muted-foreground/50" />

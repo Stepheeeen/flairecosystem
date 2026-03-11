@@ -59,6 +59,7 @@ export async function POST(request: Request) {
             const company = await Company.create([{
                 name: body.name,
                 slug: body.slug,
+                logo: body.logo,
                 // Pass down other fields if provided later
             }], { session: sessionConfig.session })
 

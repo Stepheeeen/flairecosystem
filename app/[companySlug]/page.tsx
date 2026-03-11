@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, use } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { SafeImage } from "@/components/safe-image"
 import axios from "axios"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -48,7 +48,7 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
                 {/* Hero Section */}
                 <section className="relative h-screen flex items-center justify-center overflow-hidden bg-secondary">
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <Image
+                        <SafeImage
                             src={heroImage}
                             alt="Luxury fashion"
                             fill
@@ -86,7 +86,7 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
                             <Link href={getStoreUrl(companySlug, "/products?category=women")}>
                                 <div className="group cursor-pointer">
                                     <div className="relative h-80 bg-muted overflow-hidden mb-4">
-                                        <Image
+                                        <SafeImage
                                             src="/collection-women.jpg"
                                             alt="Women's Collection"
                                             fill
@@ -101,7 +101,7 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
                             <Link href={getStoreUrl(companySlug, "/products?category=men")}>
                                 <div className="group cursor-pointer">
                                     <div className="relative h-80 bg-muted overflow-hidden mb-4">
-                                        <Image
+                                        <SafeImage
                                             src="/collection-men.jpg"
                                             alt="Men's Collection"
                                             fill
@@ -116,7 +116,7 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
                             <Link href={getStoreUrl(companySlug, "/products?category=accessories")}>
                                 <div className="group cursor-pointer">
                                     <div className="relative h-80 bg-muted overflow-hidden mb-4">
-                                        <Image
+                                        <SafeImage
                                             src="/collection-accessories.jpg"
                                             alt="Accessories Collection"
                                             fill

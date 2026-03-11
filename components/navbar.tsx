@@ -46,7 +46,14 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
           <Link href={basePath || "/"} className="flex items-center">
             {companyLogo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={companyLogo} alt={brandName} className="h-8 w-auto object-contain" />
+              <img
+                src={companyLogo}
+                alt={brandName}
+                className="h-8 w-auto object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30" viewBox="0 0 100 30"><rect width="100" height="30" fill="%23f3f4f6"/><text x="50%" y="50%" font-family="sans-serif" font-size="10" text-anchor="middle" alignment-baseline="middle" fill="%239ca3af">${brandName.substring(0, 10)}</text></svg>`
+                }}
+              />
             ) : (
               <span className="text-xl font-light tracking-widest">{brandName}</span>
             )}

@@ -25,6 +25,37 @@ export default function StoreOverviewPage({ params }: { params: Promise<{ id: st
     const [editingAdminId, setEditingAdminId] = useState<string | null>(null)
     const [editData, setEditData] = useState({ name: "", email: "" })
 
+    // Logo state
+    const [logoFile, setLogoFile] = useState<File | null>(null)
+    const [isUpdatingLogo, setIsUpdatingLogo] = useState(false)
+
+    const handleLogoUpload = async (file: File) => {
+        setIsUpdatingLogo(true)
+        try {
+            const data = new FormData()
+            data.append("file", file)
+            data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "flair_products")
+            const uploadRes = await axios.post(
+                `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                data
+            )
+            const logoUrl = uploadRes.data.secure_url
+
+            await axios.put(`/api/companies/${id}`, {
+                ...company,
+                logo: logoUrl
+            })
+
+            setCompany({ ...company, logo: logoUrl })
+            setLogoFile(null)
+            toast.success("Logo updated successfully")
+        } catch (error: any) {
+            toast.error("Failed to update logo")
+        } finally {
+            setIsUpdatingLogo(false)
+        }
+    }
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -122,6 +153,29 @@ export default function StoreOverviewPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="flex-shrink-0 relative group">
+                    <div className="h-24 w-24 rounded-lg border border-border bg-secondary/30 overflow-hidden flex items-center justify-center p-2">
+                        {company?.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={company.logo} alt={company.name} className="h-full w-full object-contain" />
+                        ) : (
+                            <Building2 className="w-8 h-8 text-muted-foreground" />
+                        )}
+                    </div>
+                    <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer rounded-lg">
+                        <span className="text-[10px] text-white font-bold uppercase tracking-tighter">{isUpdatingLogo ? "..." : "Change"}</span>
+                        <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            disabled={isUpdatingLogo}
+                            onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) handleLogoUpload(file)
+                            }}
+                        />
+                    </label>
+                </div>
                 <div className="flex-1 space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight uppercase">{company?.name}</h1>
                     <div className="flex gap-4 text-sm text-muted-foreground">
