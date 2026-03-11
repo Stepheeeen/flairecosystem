@@ -4,6 +4,7 @@ import User from "@/lib/models/user"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import mongoose from "mongoose"
+import PlatformSettings from "@/lib/models/platform-settings"
 
 export async function GET(
     _request: Request,
@@ -36,7 +37,12 @@ export async function GET(
             return Response.json({ error: "Company not found", data: null }, { status: 404 })
         }
 
-        return Response.json(company)
+        // Attach platform settings (commission rate) to the response for checkout transparency
+        const settings = await PlatformSettings.findOne({})
+        const companyObj = company.toObject()
+        companyObj.platformCommissionRate = settings?.platformCommissionRate || 0
+
+        return Response.json(companyObj)
     } catch (error) {
         console.error("Company GET error:", error)
         return Response.json(
@@ -63,7 +69,7 @@ export async function PUT(
         }
 
         await dbConnect()
-        const { name, slug, logo, customDomain, subdomain, theme, paystackPublicKey, seoTitle, seoDescription, landingPage } = await request.json()
+        const { name, slug, logo, customDomain, subdomain, theme, paystackPublicKey, paystackSecretKey, paystackSubaccountCode, seoTitle, seoDescription, landingPage } = await request.json()
 
         if (!name || !slug) {
             return Response.json({ error: "Name and slug are required", data: null }, { status: 400 })
@@ -80,7 +86,7 @@ export async function PUT(
 
         const company = await Company.findByIdAndUpdate(
             id,
-            { name, slug, logo, customDomain, subdomain, theme, paystackPublicKey, seoTitle, seoDescription, landingPage },
+            { name, slug, logo, customDomain, subdomain, theme, paystackPublicKey, paystackSecretKey, paystackSubaccountCode, seoTitle, seoDescription, landingPage },
             { new: true, runValidators: true }
         )
 

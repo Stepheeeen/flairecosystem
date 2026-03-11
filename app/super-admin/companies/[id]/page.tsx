@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, UserPlus, ShieldAlert, Trash2, Edit2, Check, X, Building2 } from "lucide-react"
+import { ArrowLeft, UserPlus, Trash2, Edit2, Check, X, Building2, DollarSign } from "lucide-react"
 import axios from "axios"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -192,6 +192,45 @@ export default function StoreOverviewPage({ params }: { params: Promise<{ id: st
                     </CardHeader>
                 </Card>
             </div>
+
+            {/* Paystack Settings */}
+            <Card className="bg-secondary/10 border-border">
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <DollarSign className="w-5 h-5 text-green-500" />
+                        Paystack Configuration
+                    </CardTitle>
+                    <CardDescription>Configure split payments where a 3% platform surcharge is added to every order.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase text-muted-foreground">Merchant Subaccount Code</label>
+                            <Input
+                                placeholder="ACCT_..."
+                                value={company?.paystackSubaccountCode || ""}
+                                onChange={(e) => setCompany({ ...company, paystackSubaccountCode: e.target.value })}
+                            />
+                            <p className="text-[10px] text-muted-foreground italic">
+                                Required for split payments. Create this in the Flair Paystack Dashboard.
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={async () => {
+                            try {
+                                await axios.put(`/api/companies/${id}`, company)
+                                toast.success("Paystack settings updated")
+                            } catch (e) {
+                                toast.error("Failed to update Paystack settings")
+                            }
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                        Save Configuration
+                    </Button>
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Admin Management */}

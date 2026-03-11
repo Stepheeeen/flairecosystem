@@ -46,12 +46,10 @@ export async function initializePayment(
   amount: number,
   reference: string,
   metadata?: Record<string, any>,
-  secretKey?: string
+  subaccount?: string,
+  commissionPercentage: number = 0,
+  transactionCharge?: number
 ): Promise<PaystackInitializeResponse> {
-  // Optionally extract a predetermined flat fee or percentage to the Platform Super Admin
-  const subaccount = process.env.PAYSTACK_PLATFORM_SUBACCOUNT
-  const transactionCharge = process.env.PAYSTACK_PLATFORM_FEE ? parseInt(process.env.PAYSTACK_PLATFORM_FEE, 10) : undefined
-
   const payload: any = {
     email,
     amount,
@@ -61,14 +59,19 @@ export async function initializePayment(
 
   if (subaccount) {
     payload.subaccount = subaccount
-    if (transactionCharge) payload.transaction_charge = transactionCharge
-    payload.bearer = "subaccount" // The merchant bears the Paystack processing fees
+    // Calculate commission as transaction_charge (in kobo)
+    if (transactionCharge !== undefined) {
+      payload.transaction_charge = transactionCharge
+    } else if (commissionPercentage > 0) {
+      payload.transaction_charge = Math.round(amount * (commissionPercentage / 100))
+    }
+    payload.bearer = "subaccount" // Merchant bears Paystack fees
   }
 
   const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${secretKey || process.env.PAYSTACK_SECRET_KEY}`,
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -87,14 +90,13 @@ export async function initializePayment(
  * @param secretKey - The localized Paystack secret key for the specific merchant
  */
 export async function verifyPayment(
-  reference: string,
-  secretKey?: string
+  reference: string
 ): Promise<PaystackVerifyResponse> {
   const response = await fetch(
     `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
     {
       headers: {
-        Authorization: `Bearer ${secretKey || process.env.PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
       },
     }
   )

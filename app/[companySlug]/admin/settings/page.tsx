@@ -468,17 +468,11 @@ export default function AdminSettingsPage() {
                                     <div>
                                         <h2 className="text-xl font-light mb-6">Payment Configuration</h2>
                                         <div className="space-y-6">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1">Paystack Public API Key</label>
-                                                <Input
-                                                    name="paystackPublicKey"
-                                                    value={formData.paystackPublicKey}
-                                                    onChange={handleChange}
-                                                    className="bg-background border-border font-mono max-w-lg"
-                                                    placeholder="pk_test_..."
-                                                />
-                                                <p className="text-xs text-muted-foreground mt-1 max-w-lg">
-                                                    Provide your public Paystack API key. All checkout payments will be settled directly to your connected account instead of the global platform.
+                                            <div className="bg-secondary/20 border border-border p-6 rounded-lg">
+                                                <h3 className="text-sm font-medium mb-2">Secure Split Payments</h3>
+                                                <p className="text-xs text-muted-foreground max-w-lg leading-relaxed">
+                                                    Your store is configured for **Automatic Revenue Sharing**. Payments are processed via the Flair Eco System Master account with a **3% platform surcharge** added to the customer's total at checkout.
+                                                    Your earnings (100% of product price) are settled directly to your connected bank account via your Paystack Subaccount.
                                                 </p>
                                             </div>
                                         </div>

@@ -21,14 +21,20 @@ export async function POST(request: Request) {
     const { reference } = event.data || {}
 
     // Find the correct secret key to use for signature verification
+    // Default to platform key (required for split payments)
     let secretKey = process.env.PAYSTACK_SECRET_KEY
 
+    // Backward compatibility: check if the order was initialized with a merchant-specific key
     if (reference) {
       await dbConnect()
       const order = await Order.findOne({ reference })
       if (order) {
         const company = await Company.findById(order.companyId)
-        if (company?.paystackSecretKey) {
+        // If the company has a secret key AND the order doesn't have a subaccount (logic check needed?)
+        // Actually, Paystack Split always uses the platform key to initialize.
+        // So if we find a subaccount involved, it MUST be the platform key.
+        // For now, we'll favor the platform key but allow override if the order was explicitly set up for a merchant key.
+        if (company?.paystackSecretKey && !company.paystackSubaccountCode) {
           secretKey = company.paystackSecretKey
         }
       }
@@ -42,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     if (event.event === "charge.success") {
-      const verification = await verifyPayment(reference, secretKey)
+      const verification = await verifyPayment(reference)
 
       if (verification.status && verification.data.status === "success") {
         await dbConnect()

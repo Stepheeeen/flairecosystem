@@ -24,7 +24,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
   const { cart, subtotal, clearCart } = useCart()
   const [isLoading, setIsLoading] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string } | null>(null)
+  const [companyContext, setCompanyContext] = useState<{ id: string, name: string, logo?: string, platformCommissionRate?: number } | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -44,7 +44,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
       try {
         const res = await axios.get(`/api/companies/${companySlug}`)
         const data = res.data
-        setCompanyContext({ id: data._id || data.id, name: data.name, logo: data.logo })
+        setCompanyContext({
+          id: data._id || data.id,
+          name: data.name,
+          logo: data.logo,
+          platformCommissionRate: data.platformCommissionRate
+        })
       } catch (error) {
         console.error("Failed to fetch company details")
       }
@@ -62,7 +67,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
   }
 
   const shipping = subtotal > 100000 ? 0 : 5000
-  const total = subtotal + shipping
+  const platformFee = Math.round(subtotal * ((companyContext?.platformCommissionRate || 0) / 100))
+  const total = subtotal + shipping + platformFee
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -279,6 +285,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
                       {shipping === 0 ? "Free" : `₦${shipping.toLocaleString()}`}
                     </span>
                   </div>
+                  {platformFee > 0 && (
+                    <div className="flex justify-between text-xs text-muted-foreground italic">
+                      <span>Platform Surcharge (3%)</span>
+                      <span>₦{platformFee.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t border-border pt-6">

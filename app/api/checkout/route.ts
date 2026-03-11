@@ -4,6 +4,7 @@ import Order from "@/lib/models/order"
 import Company from "@/lib/models/company"
 import Product from "@/lib/models/product"
 import Notification from "@/lib/models/notification"
+import PlatformSettings from "@/lib/models/platform-settings"
 
 export async function POST(request: Request) {
   try {
@@ -40,11 +41,20 @@ export async function POST(request: Request) {
       }
     }
 
+    // Fetch platform settings for commission rate
+    const settings = await PlatformSettings.findOne({})
+    const commissionPercentage = settings?.platformCommissionRate || 0
+
+    // Calculate surcharge: Customer pays Total = Store Price + (Store Price * 3%)
+    const originalAmount = amount
+    const platformFee = Math.round(originalAmount * (commissionPercentage / 100))
+    const totalToPay = originalAmount + platformFee
+
     const reference = generateReference()
 
     const paymentResponse = await initializePayment(
       email,
-      amount,
+      totalToPay, // Customer pays total (Store Price + Surcharge)
       reference,
       {
         customer: {
@@ -62,9 +72,13 @@ export async function POST(request: Request) {
           price: item.price,
           quantity: item.quantity,
         })),
-        companyId, // Pass companyId to metadata if needed
+        companyId,
+        originalAmount, // Store original for reference
+        platformFee,   // Store fee for reference
       },
-      company.paystackSecretKey // Dynamically inject the local merchant SECRET key if one is set!
+      company.paystackSubaccountCode, // Subaccount for splitting
+      commissionPercentage, // Pass percentage to internal split logic
+      platformFee // Pass the calculated surcharge fee explicitly
     )
 
     if (!paymentResponse.status) {
@@ -94,7 +108,8 @@ export async function POST(request: Request) {
         size: item.size,
         color: item.color,
       })),
-      totalAmount: amount,
+      totalAmount: totalToPay,
+      platformFee: platformFee,
       status: "pending",
       companyId,
       userId: userId || undefined,

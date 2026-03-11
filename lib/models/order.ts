@@ -20,6 +20,7 @@ export interface IOrder extends Document {
   zip: string
   items: IOrderItem[]
   totalAmount: number
+  platformFee: number
   status: "pending" | "completed" | "processing" | "shipped" | "delivered" | "cancelled" | "failed"
   paidAt?: Date
   userId?: Types.ObjectId
@@ -52,6 +53,7 @@ const OrderSchema = new Schema<IOrder>(
     zip: { type: String, default: "" },
     items: [OrderItemSchema],
     totalAmount: { type: Number, required: true },
+    platformFee: { type: Number, default: 0 },
     status: {
       type: String,
       enum: ["pending", "completed", "processing", "shipped", "delivered", "cancelled", "failed"],

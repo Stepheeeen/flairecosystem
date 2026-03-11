@@ -7,18 +7,21 @@ import mongoose from "mongoose"
 export async function GET() {
     try {
         const session = await getServerSession(authOptions)
-        if (!session || session.user.role !== "admin") {
+        if (!session || (session.user.role !== "admin" && session.user.role !== "super_admin")) {
             return Response.json({ error: "Unauthorized", data: null }, { status: 401 })
         }
 
         await dbConnect()
 
-        const notifications = await Notification.find({
-            companyId: new mongoose.Types.ObjectId(session.user.companyId),
-        }).sort({ createdAt: -1 }).limit(20)
+        const filter: any = {}
+        if (session.user.role === "admin" && session.user.companyId) {
+            filter.companyId = new mongoose.Types.ObjectId(session.user.companyId)
+        }
+
+        const notifications = await Notification.find(filter).sort({ createdAt: -1 }).limit(20)
 
         const unreadCount = await Notification.countDocuments({
-            companyId: new mongoose.Types.ObjectId(session.user.companyId),
+            ...filter,
             read: false
         })
 
@@ -32,7 +35,7 @@ export async function GET() {
 export async function PATCH(request: Request) {
     try {
         const session = await getServerSession(authOptions)
-        if (!session || session.user.role !== "admin") {
+        if (!session || (session.user.role !== "admin" && session.user.role !== "super_admin")) {
             return Response.json({ error: "Unauthorized", data: null }, { status: 401 })
         }
 
@@ -40,8 +43,13 @@ export async function PATCH(request: Request) {
 
         await dbConnect()
 
+        const filter: any = { _id: new mongoose.Types.ObjectId(id) }
+        if (session.user.role === "admin" && session.user.companyId) {
+            filter.companyId = new mongoose.Types.ObjectId(session.user.companyId)
+        }
+
         const notification = await Notification.findOneAndUpdate(
-            { _id: new mongoose.Types.ObjectId(id), companyId: new mongoose.Types.ObjectId(session.user.companyId) },
+            filter,
             { read: true },
             { new: true }
         )

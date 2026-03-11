@@ -60,6 +60,7 @@ export async function POST(request: Request) {
                 name: body.name,
                 slug: body.slug,
                 logo: body.logo,
+                paystackSubaccountCode: body.paystackSubaccountCode,
                 // Pass down other fields if provided later
             }], { session: sessionConfig.session })
 

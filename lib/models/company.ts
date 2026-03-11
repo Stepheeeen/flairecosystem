@@ -13,6 +13,7 @@ export interface ICompany extends Document {
     }
     paystackPublicKey?: string
     paystackSecretKey?: string
+    paystackSubaccountCode?: string
     seoTitle?: string
     seoDescription?: string
     landingPage?: {
@@ -43,6 +44,7 @@ const CompanySchema = new Schema<ICompany>(
         },
         paystackPublicKey: { type: String },
         paystackSecretKey: { type: String },
+        paystackSubaccountCode: { type: String },
         seoTitle: { type: String },
         seoDescription: { type: String },
         landingPage: {

@@ -22,6 +22,7 @@ export default function SuperAdminDashboard() {
     const [logoFile, setLogoFile] = useState<File | null>(null)
     const [adminEmail, setAdminEmail] = useState("")
     const [adminPassword, setAdminPassword] = useState("")
+    const [newPaystackSubaccount, setNewPaystackSubaccount] = useState("")
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -66,12 +67,14 @@ export default function SuperAdminDashboard() {
                 name: newCompanyName,
                 slug: newCompanySlug,
                 logo: logoUrl || undefined,
+                paystackSubaccountCode: newPaystackSubaccount || undefined,
                 adminEmail: adminEmail || undefined,
                 adminPassword: adminPassword || undefined
             })
             setCompanies([res.data, ...companies])
             setNewCompanyName("")
             setNewCompanySlug("")
+            setNewPaystackSubaccount("")
             setLogoPreview("")
             setLogoFile(null)
             setAdminEmail("")
@@ -340,6 +343,11 @@ export default function SuperAdminDashboard() {
                                 placeholder="URL Slug (e.g., flair)"
                                 value={newCompanySlug}
                                 onChange={(e) => setNewCompanySlug(e.target.value)}
+                            />
+                            <Input
+                                placeholder="Paystack Subaccount (ACCT_...)"
+                                value={newPaystackSubaccount}
+                                onChange={(e) => setNewPaystackSubaccount(e.target.value)}
                             />
                             <div className="space-y-2">
                                 <label className="text-xs text-muted-foreground">Store Logo (Optional)</label>
