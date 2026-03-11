@@ -2,7 +2,7 @@ import dbConnect from "@/lib/db"
 import User from "@/lib/models/user"
 import Company from "@/lib/models/company"
 import crypto from "crypto"
-import { sendVerificationEmail } from "@/lib/email"
+import { sendVerificationEmail } from "@/lib/email-service"
 
 export async function POST(request: Request) {
   try {
@@ -72,9 +72,13 @@ export async function POST(request: Request) {
     } else {
       console.warn("No RESEND_API_KEY found. Email verification skipped.")
       console.log(`[DEBUG] Verification Token for ${email}: ${verificationToken}`)
+      // Store email for potential resend in verification page
+      if (typeof window !== "undefined") {
+        localStorage.setItem("pending_verification_email", email.toLowerCase())
+      }
     }
 
-    return Response.json({ success: true })
+    return Response.json({ success: true, message: "Verification email sent. Please check your inbox." })
   } catch (error) {
     console.error("Signup error:", error)
     return Response.json(

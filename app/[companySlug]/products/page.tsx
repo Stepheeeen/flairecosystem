@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense, use } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { ProductCard } from "@/components/product-card"
+import { Preloader } from "@/components/preloader"
 import { Search, SlidersHorizontal } from "lucide-react"
 import axios from "axios"
 
@@ -240,9 +241,7 @@ function ProductsContent({ companySlug }: { companySlug: string }) {
 
               {/* Products */}
               {isLoading ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">Loading products...</p>
-                </div>
+                <Preloader fullScreen={false} />
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground">No products found</p>
@@ -265,7 +264,7 @@ function ProductsContent({ companySlug }: { companySlug: string }) {
 export default function ProductsPage({ params }: { params: Promise<{ companySlug: string }> }) {
   const unwrappedParams = use(params)
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<Preloader text="FLAIR" />}>
       <ProductsContent companySlug={unwrappedParams.companySlug} />
     </Suspense>
   )

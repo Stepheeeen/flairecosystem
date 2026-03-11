@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         })),
         companyId, // Pass companyId to metadata if needed
       },
-      company.paystackPublicKey // Dynamically inject the local merchant API key if one is set!
+      company.paystackSecretKey // Dynamically inject the local merchant SECRET key if one is set!
     )
 
     if (!paymentResponse.status) {
@@ -74,25 +74,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // 2. Decrement Stock Counts atomically since checkout has been initialized
-    for (const item of cart) {
-      const updatedProduct = await Product.findByIdAndUpdate(
-        item.id,
-        { $inc: { stockCount: -item.quantity } },
-        { new: true }
-      )
-
-      if (updatedProduct && updatedProduct.stockCount <= 5) {
-        // Create an In-App Notification for Low Stock
-        await Notification.create({
-          companyId,
-          title: "Low Stock Alert",
-          message: `${updatedProduct.name} is running low on inventory. Only ${updatedProduct.stockCount} remaining.`,
-          type: "STOCK",
-          link: `/${company.slug}/admin/products`
-        })
-      }
-    }
+    // 2. We no longer decrement stock here. 
+    // It is now handled in the Paystack Webhook only after successful payment!
 
     await Order.create({
       reference,

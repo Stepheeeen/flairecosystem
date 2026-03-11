@@ -16,27 +16,58 @@ export async function PATCH(
         const { id } = await params
         await dbConnect()
 
-        const { password } = await request.json()
+        const { name, email, password, role, companyId } = await request.json()
 
-        if (!password || password.length < 6) {
-            return Response.json({ error: "Password must be at least 6 characters" }, { status: 400 })
-        }
-
-        // We find the user and explicitly reset their password
         const user = await User.findById(id)
-
         if (!user) {
             return Response.json({ error: "User not found" }, { status: 404 })
         }
 
-        user.password = password
+        if (name) user.name = name
+        if (email) user.email = email.toLowerCase()
+        if (password && password.length >= 6) user.password = password
+        if (role) user.role = role
+        if (companyId !== undefined) user.companyId = companyId || null
+
         await user.save()
 
-        return Response.json({ message: "Password updated successfully" })
+        const userResponse = user.toObject()
+        delete userResponse.password
+
+        return Response.json(userResponse)
     } catch (error) {
         console.error("Super Admin Users PATCH error:", error)
         return Response.json(
-            { error: "Failed to update user password", data: error instanceof Error ? error.message : String(error) },
+            { error: "Failed to update user", data: error instanceof Error ? error.message : String(error) },
+            { status: 500 }
+        )
+    }
+}
+
+export async function DELETE(
+    _request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions)
+        if (!session || session.user.role !== "super_admin") {
+            return Response.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const { id } = await params
+        await dbConnect()
+
+        const deletedUser = await User.findByIdAndDelete(id)
+
+        if (!deletedUser) {
+            return Response.json({ error: "User not found" }, { status: 404 })
+        }
+
+        return Response.json({ message: "User deleted successfully" })
+    } catch (error) {
+        console.error("Super Admin Users DELETE error:", error)
+        return Response.json(
+            { error: "Failed to delete user", data: error instanceof Error ? error.message : String(error) },
             { status: 500 }
         )
     }

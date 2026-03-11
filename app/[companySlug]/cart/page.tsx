@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+import { Preloader } from "@/components/preloader"
 import { useCart } from "@/hooks/use-cart"
 import { Trash2, ArrowRight } from "lucide-react"
 import axios from "axios"
@@ -39,9 +40,7 @@ export default function CartPage({ params }: { params: Promise<{ companySlug: st
     return (
       <>
         <Navbar companySlug={companySlug} companyName={companyName} companyLogo={companyLogo} />
-        <div className="min-h-screen flex items-center justify-center">
-          <p className="text-muted-foreground">Loading cart...</p>
-        </div>
+        <Preloader />
       </>
     )
   }

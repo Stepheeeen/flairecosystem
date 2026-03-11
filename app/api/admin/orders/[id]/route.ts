@@ -2,7 +2,7 @@ import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { sendOrderShippedEmail } from "@/lib/emails"
+import { sendOrderShippedEmail } from "@/lib/email-service"
 
 export async function PATCH(
   request: Request,

@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+import { Preloader } from "@/components/preloader"
 import { useCart } from "@/hooks/use-cart"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -55,18 +56,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ companySlug
     return (
       <>
         <Navbar companySlug={companySlug} companyName={companyContext?.name} companyLogo={companyContext?.logo} />
-        <div className="min-h-screen flex items-center justify-center">
-          {!cart.length && isMounted ? (
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">Cart is empty</p>
-              <Link href={getStoreUrl(companySlug, '/products')}>
-                <Button>Back to Shop</Button>
-              </Link>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">Loading...</p>
-          )}
-        </div>
+        <Preloader />
       </>
     )
   }

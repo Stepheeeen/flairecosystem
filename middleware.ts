@@ -47,15 +47,21 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Handle Custom Domain / Subdomain Rewrites
-  // If the hostname is NOT the root domain (and not a Vercel preview domain),
-  // we rewrite the URL so that the App Router treats the hostname as the first path segment.
   if (
     hostname !== rootDomain &&
     !hostname.includes("vercel.app") &&
     !url.pathname.startsWith("/super-admin")
   ) {
-    // We rewrite mystore.com/products to /mystore.com/products
-    return NextResponse.rewrite(new URL(`/${hostname}${url.pathname}`, request.url))
+    let slug = hostname
+
+    // If it's a subdomain of the root domain, extract the prefix
+    // e.g., mystore.localhost:3000 -> mystore
+    if (hostname.endsWith(`.${rootDomain}`)) {
+      slug = hostname.replace(`.${rootDomain}`, "")
+    }
+
+    // We rewrite host/products to /slug/products
+    return NextResponse.rewrite(new URL(`/${slug}${url.pathname}`, request.url))
   }
 
   return NextResponse.next()

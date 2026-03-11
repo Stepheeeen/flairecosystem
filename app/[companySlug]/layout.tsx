@@ -10,11 +10,13 @@ export async function generateMetadata(
     const { companySlug } = await params
     await dbConnect()
 
-    let company = await Company.findOne({ slug: companySlug }).lean()
-
-    if (!company && mongoose.Types.ObjectId.isValid(companySlug)) {
-        company = await Company.findById(companySlug).lean()
-    }
+    let company = await Company.findOne({
+        $or: [
+            { slug: companySlug },
+            { customDomain: companySlug },
+            { subdomain: companySlug }
+        ]
+    }).lean()
 
     if (!company) {
         return {
@@ -40,11 +42,13 @@ export default async function CompanyLayout({
 
     await dbConnect()
 
-    let company = await Company.findOne({ slug: companySlug }).lean()
-
-    if (!company && mongoose.Types.ObjectId.isValid(companySlug)) {
-        company = await Company.findById(companySlug).lean()
-    }
+    let company = await Company.findOne({
+        $or: [
+            { slug: companySlug },
+            { customDomain: companySlug },
+            { subdomain: companySlug }
+        ]
+    }).lean()
 
     if (!company) {
         return notFound()

@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DollarSign, ShoppingCart, Building2, TrendingUp } from "lucide-react"
+import { DollarSign, ShoppingCart, Building2, TrendingUp, Eye, Trash2 } from "lucide-react"
 import axios from "axios"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import Link from "next/link"
 
 export default function SuperAdminDashboard() {
     const [companies, setCompanies] = useState<any[]>([])
@@ -70,6 +71,17 @@ export default function SuperAdminDashboard() {
             setCompanies(companies.map(c => c._id === companyId || c.id === companyId ? { ...c, status: res.data.status } : c))
         } catch (error: any) {
             alert(error.response?.data?.error || "Failed to update status")
+        }
+    }
+
+    const handleDeleteStore = async (companyId: string, companyName: string) => {
+        if (!confirm(`Are you sure you want to delete ${companyName}? This will remove all associated data.`)) return
+        try {
+            await axios.delete(`/api/companies/${companyId}`)
+            setCompanies(companies.filter(c => c._id !== companyId && c.id !== companyId))
+            alert("Store deleted successfully")
+        } catch (error: any) {
+            alert(error.response?.data?.error || "Failed to delete store")
         }
     }
 
@@ -362,13 +374,29 @@ export default function SuperAdminDashboard() {
                                                     {company.subdomain && <div className="text-orange-500">{company.subdomain}.flairecosystem.com</div>}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button
-                                                        variant={company.status === "active" ? "outline" : "destructive"}
-                                                        size="sm"
-                                                        onClick={() => handleToggleStatus(company._id || company.id, company.status || "active")}
-                                                    >
-                                                        {company.status === "suspended" ? "Unsuspend Site" : "Suspend Site"}
-                                                    </Button>
+                                                    <div className="flex justify-end gap-2">
+                                                        <Link href={`/super-admin/companies/${company._id || company.id}`}>
+                                                            <Button variant="outline" size="sm">
+                                                                <Eye className="w-4 h-4 mr-2" />
+                                                                View Metrics
+                                                            </Button>
+                                                        </Link>
+                                                        <Button
+                                                            variant={company.status === "active" ? "outline" : "destructive"}
+                                                            size="sm"
+                                                            onClick={() => handleToggleStatus(company._id || company.id, company.status || "active")}
+                                                        >
+                                                            {company.status === "suspended" ? "Unsuspend" : "Suspend"}
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-destructive hover:bg-destructive/10"
+                                                            onClick={() => handleDeleteStore(company._id || company.id, company.name)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))

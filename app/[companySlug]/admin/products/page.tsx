@@ -96,7 +96,7 @@ export default function AdminProductsPage() {
     const uploadToCloudinary = async (file: File) => {
       const data = new FormData()
       data.append("file", file)
-      data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "vellion_products")
+      data.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "flair_products")
       const res = await axios.post(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
         data

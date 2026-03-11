@@ -1,14 +1,14 @@
 import dbConnect from "@/lib/db"
 import User from "@/lib/models/user"
 import crypto from "crypto"
-import { sendPasswordResetEmail } from "@/lib/email"
+import { sendPasswordResetEmail } from "@/lib/email-service"
 
 export async function POST(request: Request) {
     try {
         const { email, companyName } = await request.json()
 
         if (!email) {
-            return Response.json({ error: "Email is required" , data: null }, { status: 400 })
+            return Response.json({ error: "Email is required", data: null }, { status: 400 })
         }
 
         await dbConnect()
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error("Forgot password error:", error)
         return Response.json(
-            { error: "Failed to process forgot password request" , data: error instanceof Error ? error.message : String(error) },
+            { error: "Failed to process forgot password request", data: error instanceof Error ? error.message : String(error) },
             { status: 500 }
         )
     }

@@ -67,6 +67,9 @@ export default function SignUpPage() {
         companySlug,
       })
 
+      // Store email for potential resend on the verification page
+      localStorage.setItem("pending_verification_email", formData.email.toLowerCase())
+
       router.push(getStoreUrl(companySlug, "/auth/signin"))
     } catch (error: any) {
       setError(error.response?.data?.error || "An error occurred. Please try again.")

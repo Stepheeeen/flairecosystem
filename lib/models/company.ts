@@ -12,6 +12,7 @@ export interface ICompany extends Document {
         heroImage?: string
     }
     paystackPublicKey?: string
+    paystackSecretKey?: string
     seoTitle?: string
     seoDescription?: string
     landingPage?: {
@@ -41,6 +42,7 @@ const CompanySchema = new Schema<ICompany>(
             heroImage: { type: String },
         },
         paystackPublicKey: { type: String },
+        paystackSecretKey: { type: String },
         seoTitle: { type: String },
         seoDescription: { type: String },
         landingPage: {

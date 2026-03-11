@@ -6,6 +6,7 @@ import Image from "next/image"
 import axios from "axios"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+import { Preloader } from "@/components/preloader"
 import { getStoreUrl } from "@/lib/utils"
 
 function StoreLandingContent({ companySlug }: { companySlug: string }) {
@@ -251,7 +252,7 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
 export default function TenantLandingPage({ params }: { params: Promise<{ companySlug: string }> }) {
     const unwrappedParams = use(params)
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading storefront...</div>}>
+        <Suspense fallback={<Preloader text="FLAIR" />}>
             <StoreLandingContent companySlug={unwrappedParams.companySlug} />
         </Suspense>
     )

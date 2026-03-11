@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/db"
 import Company from "@/lib/models/company"
+import User from "@/lib/models/user"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import mongoose from "mongoose"
@@ -14,12 +15,18 @@ export async function GET(
         await dbConnect()
 
         // Find by slug first for public routing
-        let company = await Company.findOne({ slug: id })
-        console.log("DEBUG: Company found by slug:", company ? "YES" : "NO")
+        let company = await Company.findOne({
+            $or: [
+                { slug: id },
+                { customDomain: id },
+                { subdomain: id }
+            ]
+        })
+        console.log("DEBUG: Company found by slug/domain:", company ? "YES" : "NO")
 
         if (!company && mongoose.Types.ObjectId.isValid(id)) {
             // Fallback to find by ID if not slug and is valid ObjectId
-            console.log("DEBUG: Not found by slug, trying by ID")
+            console.log("DEBUG: Not found by slug/domain, trying by ID")
             company = await Company.findById(id)
             console.log("DEBUG: Company found by ID:", company ? "YES" : "NO")
         }
@@ -125,6 +132,47 @@ export async function PATCH(
         console.error("Company PATCH error:", error)
         return Response.json(
             { error: "Failed to update company status", data: error instanceof Error ? error.message : String(error) },
+            { status: 500 }
+        )
+    }
+}
+
+export async function DELETE(
+    _request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions)
+        if (!session || session.user.role !== "super_admin") {
+            return Response.json({ error: "Unauthorized", data: null }, { status: 401 })
+        }
+
+        const { id } = await params
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return Response.json({ error: "Invalid ID format", data: null }, { status: 400 })
+        }
+
+        await dbConnect()
+
+        // Perform deletion
+        // Note: In a real production system, we might want to do a soft delete 
+        // or ensure all related data (products, orders) are handled.
+        // For this implementation, we will delete the company and dissociate users.
+        const deletedCompany = await Company.findByIdAndDelete(id)
+
+        if (!deletedCompany) {
+            return Response.json({ error: "Company not found", data: null }, { status: 404 })
+        }
+
+        // Dissociate users from this company
+        await User.updateMany({ companyId: id }, { $unset: { companyId: "" }, role: "customer" })
+
+        return Response.json({ message: "Company deleted successfully", data: deletedCompany })
+    } catch (error) {
+        console.error("Company DELETE error:", error)
+        return Response.json(
+            { error: "Failed to delete company", data: error instanceof Error ? error.message : String(error) },
             { status: 500 }
         )
     }
