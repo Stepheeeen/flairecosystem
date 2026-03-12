@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import dbConnect from "@/lib/db"
 import Order from "@/lib/models/order"
 import { getServerSession } from "next-auth/next"
