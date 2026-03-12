@@ -1,6 +1,15 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const getResendClient = () => {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.warn("RESEND_API_KEY is not defined. Email services will be limited.")
+    return null
+  }
+  return new Resend(apiKey)
+}
+
+const resend = getResendClient()
 
 // Authentication Emails
 
@@ -9,6 +18,12 @@ export async function sendVerificationEmail(
   token: string,
   companyName: string = "Flair Eco System"
 ) {
+  if (!resend) {
+    console.warn("Resend client not initialized. Skipping verification email.")
+    console.log(`[DEBUG] Verification Token for ${email}: ${token}`)
+    return
+  }
+
   const verifyLink = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}`
 
   return resend.emails.send({
@@ -35,6 +50,12 @@ export async function sendPasswordResetEmail(
   token: string,
   companyName: string = "Flair Eco System"
 ) {
+  if (!resend) {
+    console.warn("Resend client not initialized. Skipping password reset email.")
+    console.log(`[DEBUG] Reset Password Token for ${email}: ${token}`)
+    return
+  }
+
   const resetLink = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}`
 
   return resend.emails.send({
@@ -64,7 +85,7 @@ export const sendOrderConfirmedEmail = async (
   orderRef: string,
   totalAmount: number
 ) => {
-  if (!process.env.RESEND_API_KEY) return
+  if (!resend) return
 
   try {
     await resend.emails.send({
@@ -95,7 +116,7 @@ export const sendNewSaleEmail = async (
   orderRef: string,
   totalAmount: number
 ) => {
-  if (!process.env.RESEND_API_KEY) return
+  if (!resend) return
 
   try {
     await resend.emails.send({
@@ -124,7 +145,7 @@ export const sendOrderShippedEmail = async (
   customerName: string,
   orderRef: string
 ) => {
-  if (!process.env.RESEND_API_KEY) return
+  if (!resend) return
 
   try {
     await resend.emails.send({
