@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
   // Define root domains (e.g., localhost:3000, flairecosystem.com)
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || ""
   const isLocalRoot = hostname === "localhost:3000" || hostname === "localhost"
-  const isProdRoot = hostname === rootDomain
+  const isProdRoot = hostname === rootDomain || hostname === `www.${rootDomain}`
   const isRoot = isLocalRoot || isProdRoot
   const isVercel = hostname.includes("vercel.app")
 
