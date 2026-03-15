@@ -41,14 +41,12 @@ function SuperAdminSignInForm() {
             const result = await signIn("credentials", {
                 email: formData.email,
                 password: formData.password,
-                redirect: false,
+                redirect: true,
+                callbackUrl: callbackUrl.startsWith("http") ? new URL(callbackUrl).pathname : callbackUrl,
             })
 
             if (result?.error) {
                 setError("Invalid email or password")
-            } else {
-                router.push("/super-admin")
-                router.refresh()
             }
         } catch {
             setError("An error occurred. Please try again.")

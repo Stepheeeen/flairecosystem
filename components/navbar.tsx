@@ -2,7 +2,7 @@
 import { getStoreUrl } from "@/lib/utils"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { ShoppingCart, Menu, X } from "lucide-react"
@@ -19,12 +19,14 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
   const { data: session } = useSession()
 
   const basePath = companySlug ? `/${companySlug}` : ""
   const shopPath = `${basePath}/products`
   const cartPath = `${basePath}/cart`
   const brandName = companyName || (companySlug ? companySlug.replace(/-/g, ' ').toUpperCase() : "FLAIR ECO SYSTEM")
+  const isSuperAdminSignIn = pathname === "/super-admin/signin"
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,28 +62,30 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              href={shopPath}
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              Shop
-            </Link>
-            <Link
-              href={shopPath}
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              Collections
-            </Link>
-            {session && (
+          {!isSuperAdminSignIn && (
+            <div className="hidden md:flex items-center space-x-8">
               <Link
-                href={getStoreUrl(companySlug, "/account")}
-                className="text-sm font-medium hover:text-primary transition-colors text-primary"
+                href={shopPath}
+                className="text-sm font-medium hover:text-primary transition-colors"
               >
-                Account
+                Shop
               </Link>
-            )}
-          </div>
+              <Link
+                href={shopPath}
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
+                Collections
+              </Link>
+              {session && (
+                <Link
+                  href={getStoreUrl(companySlug, "/account")}
+                  className="text-sm font-medium hover:text-primary transition-colors text-primary"
+                >
+                  Account
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
@@ -118,7 +122,7 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && (
+        {isOpen && !isSuperAdminSignIn && (
           <div className="md:hidden pb-4 space-y-3 border-t border-border">
             <Link
               href={shopPath}
