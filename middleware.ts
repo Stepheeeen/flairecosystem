@@ -24,7 +24,9 @@ export async function middleware(request: NextRequest) {
   const isSuperAdminRoute = url.pathname.startsWith("/super-admin") && !url.pathname.startsWith("/super-admin/signin")
 
   if (isAdminRoute || isSuperAdminRoute) {
-    const token = await getToken({ req: request })
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    console.log(`[Middleware] Auth Check - Path: ${url.pathname}, Host: ${hostname}, Token: ${!!token}, Role: ${token?.role}`)
+    
     if (!token) {
       let signInUrl: URL
       if (isSuperAdminRoute) {
