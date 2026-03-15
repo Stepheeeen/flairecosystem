@@ -23,9 +23,14 @@ export function Preloader({ text = "FLAIR", fullScreen = true }: PreloaderProps)
                 <div className="w-24 h-24 border-[1px] border-primary/10 rounded-full flex items-center justify-center">
                     <div className="w-24 h-24 border-t-[1px] border-primary rounded-full animate-spin absolute inset-0" style={{ animationDuration: '2s' }} />
 
-                    {/* FLAIR Text Animation */}
-                    <div className="overflow-hidden">
-                        <h2 className="text-xl font-light tracking-[0.5em] animate-pulse text-primary pl-[0.5em]">
+                    {/* Logo/Text Animation */}
+                    <div className="overflow-hidden flex flex-col items-center justify-center gap-1">
+                        <img
+                            src="/logo.png"
+                            alt="Logo"
+                            className="h-8 w-auto object-contain opacity-80"
+                        />
+                        <h2 className="text-[10px] font-light tracking-[0.4em] animate-pulse text-primary pl-[0.4em]">
                             {text}
                         </h2>
                     </div>

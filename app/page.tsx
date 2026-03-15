@@ -13,9 +13,13 @@ export default function Home() {
       <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/60 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-              F
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Flair Eco System"
+              width={32}
+              height={32}
+              className="h-8 w-auto object-contain"
+            />
             <span className="text-xl font-medium tracking-tight">Flair Eco System</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
@@ -147,9 +151,13 @@ export default function Home() {
       <footer className="border-t border-border/40 bg-background py-12">
         <div className="container mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground font-bold text-sm">
-              F
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Flair Eco System"
+              width={24}
+              height={24}
+              className="h-6 w-auto object-contain brightness-0 invert"
+            />
             <span className="text-sm font-semibold tracking-tight">Flair Eco System Management</span>
           </div>
           <p className="text-sm text-muted-foreground">
