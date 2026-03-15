@@ -17,6 +17,7 @@ export async function middleware(request: NextRequest) {
   const isLocalRoot = hostname === "localhost:3000" || hostname === "localhost"
   const isProdRoot = hostname === rootDomain
   const isRoot = isLocalRoot || isProdRoot
+  const isVercel = hostname.includes("vercel.app")
 
   // 1. Handle Authentication for Admin routes
   const isAdminRoute = url.pathname.startsWith("/admin") || /^\/[^/]+\/admin(\/.*)?$/.test(url.pathname)
@@ -50,7 +51,6 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Handle Custom Domain / Subdomain Rewrites
-  const isVercel = hostname.includes("vercel.app")
   const isNextInternal = url.pathname.startsWith("/_next") || url.pathname.startsWith("/api")
 
   if (
