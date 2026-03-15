@@ -52,12 +52,16 @@ export async function middleware(request: NextRequest) {
 
   // 2. Handle Custom Domain / Subdomain Rewrites
   const isNextInternal = url.pathname.startsWith("/_next") || url.pathname.startsWith("/api")
+  const isExcludedPath = 
+    url.pathname.startsWith("/super-admin") || 
+    url.pathname.startsWith("/suspended") ||
+    url.pathname.startsWith("/api")
 
   if (
     !isRoot &&
     !isVercel &&
     !isNextInternal &&
-    !url.pathname.startsWith("/super-admin")
+    !isExcludedPath
   ) {
     let slug = hostname
 
@@ -65,6 +69,11 @@ export async function middleware(request: NextRequest) {
     // e.g., mystore.flairecosystem.com -> mystore
     if (hostname.endsWith(`.${rootDomain}`)) {
       slug = hostname.replace(`.${rootDomain}`, "")
+    }
+
+    // Don't rewrite if slug is 'www' (already handled by isRoot but just in case)
+    if (slug === "www") {
+      return NextResponse.next()
     }
 
     // We rewrite host/products to /slug/products
