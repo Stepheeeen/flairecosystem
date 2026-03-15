@@ -68,21 +68,26 @@ export async function middleware(request: NextRequest) {
     let slug = hostname
 
     // If it's a subdomain of the root domain, extract the prefix
-    // e.g., mystore.flairecosystem.com -> mystore
     if (hostname.endsWith(`.${rootDomain}`)) {
       slug = hostname.replace(`.${rootDomain}`, "")
     }
 
-    // Don't rewrite if slug is 'www' (already handled by isRoot but just in case)
+    // Don't rewrite if slug is 'www'
     if (slug === "www") {
       return NextResponse.next()
     }
 
-    // We rewrite host/products to /slug/products
-    // The [companySlug] dynamic route will catch this.
-    // Ensure we don't accidentally double-prefix if someone visits sub.root.com/sub/...
+    // REDIRECT: If the pathname starts with the slug, redirect to the clean version
+    // e.g., vellion.flairecosystem.com/vellion/products -> /products
     if (url.pathname.startsWith(`/${slug}`)) {
-      return NextResponse.next()
+      const cleanPath = url.pathname.replace(`/${slug}`, "") || "/"
+      const redirectUrl = new URL(cleanPath, request.url)
+      // Preserving search params
+      url.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value)
+      })
+      console.log(`[Middleware] Subdomain Redirect - From: ${url.pathname}, To: ${cleanPath}`)
+      return NextResponse.redirect(redirectUrl)
     }
 
     return NextResponse.rewrite(new URL(`/${slug}${url.pathname}`, request.url))

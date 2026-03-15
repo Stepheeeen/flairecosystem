@@ -23,8 +23,8 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
   const { data: session } = useSession()
 
   const basePath = companySlug ? `/${companySlug}` : ""
-  const shopPath = `${basePath}/products`
-  const cartPath = `${basePath}/cart`
+  const shopPath = getStoreUrl(companySlug, "/products")
+  const cartPath = getStoreUrl(companySlug, "/cart")
   const brandName = companyName || (companySlug ? companySlug.replace(/-/g, ' ').toUpperCase() : "FLAIR ECO SYSTEM")
   const isSuperAdminSignIn = pathname === "/super-admin/signin"
 
@@ -102,7 +102,7 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(basePath ? basePath + "/auth/signin" : "/auth/signin")}
+                onClick={() => router.push(getStoreUrl(companySlug, "/auth/signin"))}
                 className="text-sm font-medium"
               >
                 Sign In

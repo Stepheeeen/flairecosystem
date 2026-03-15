@@ -15,9 +15,13 @@ export function getStoreUrl(companySlug: string | undefined, path: string) {
   const currentHost = typeof window !== 'undefined' ? window.location.host : ""
 
   // Case 1: Accessed via local development without a specific domain mapping (e.g., localhost:3000/slug/...)
-  // Case 2: Accessed via the root domain directly (e.g., flairecosystem.com/slug/...)
+  // Case 2: Accessed via the root domain directly (e.g., flairecosystem.com/slug/...) or www subdomain
   // In these cases, we need the slug prefix.
-  const isRootDomain = !currentHost || currentHost === rootDomain || currentHost.startsWith('localhost') && !currentHost.includes('.')
+  const isRootDomain = 
+    !currentHost || 
+    currentHost === rootDomain || 
+    currentHost === `www.${rootDomain}` ||
+    (currentHost.startsWith('localhost') && !currentHost.includes('.'))
 
   if (isRootDomain) {
     return `/${companySlug}${path.startsWith('/') ? path : `/${path}`}`;
@@ -25,5 +29,6 @@ export function getStoreUrl(companySlug: string | undefined, path: string) {
 
   // Case 3: Accessed via subdomain or custom domain (e.g., store.com/path or store.flair.com/path)
   // The middleware already rewrote this internally, so we don't need the slug in the URL.
+  // However, we should ensure the path is returned as is.
   return path.startsWith('/') ? path : `/${path}`;
 }
