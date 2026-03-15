@@ -19,6 +19,11 @@ export async function middleware(request: NextRequest) {
   const isRoot = isLocalRoot || isProdRoot
   const isVercel = hostname.includes("vercel.app")
 
+  // 0. Prevent redirect loops from internal rewrites
+  if (request.headers.get("x-internal-rewrite")) {
+    return NextResponse.next()
+  }
+
   // 1. Handle Authentication for Admin routes
   const isAdminRoute = url.pathname.startsWith("/admin") || /^\/[^/]+\/admin(\/.*)?$/.test(url.pathname)
   const isSuperAdminRoute = url.pathname.startsWith("/super-admin") && !url.pathname.startsWith("/super-admin/signin")
@@ -46,9 +51,15 @@ export async function middleware(request: NextRequest) {
     }
 
     if (isAdminRoute) {
-      if (token.role === "super_admin") return NextResponse.next()
-      if (token.role === "admin" && token.companyId) return NextResponse.next()
-      return NextResponse.redirect(new URL("/", request.url))
+      if (token.role === "super_admin" || (token.role === "admin" && token.companyId)) {
+        // If it's a root domain, we can proceed. 
+        // If it's a subdomain, we NEED to fall through to the rewrite section.
+        if (isRoot || isVercel) {
+          return NextResponse.next()
+        }
+      } else {
+        return NextResponse.redirect(new URL("/", request.url))
+      }
     }
   }
 
@@ -90,7 +101,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    return NextResponse.rewrite(new URL(`/${slug}${url.pathname}`, request.url))
+    const rewriteUrl = new URL(`/${slug}${url.pathname}`, request.url)
+    console.log(`[Middleware] Subdomain Rewrite - From: ${url.pathname}, To: /${slug}${url.pathname}`)
+    
+    const responseHeaders = new Headers(request.headers)
+    responseHeaders.set("x-internal-rewrite", "true")
+    
+    return NextResponse.rewrite(rewriteUrl, {
+      request: {
+        headers: responseHeaders
+      }
+    })
   }
 
   return NextResponse.next()
