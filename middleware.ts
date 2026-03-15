@@ -19,8 +19,17 @@ export async function middleware(request: NextRequest) {
   const isRoot = isLocalRoot || isProdRoot
   const isVercel = hostname.includes("vercel.app")
 
+  // Extract slug from hostname if it's a subdomain/custom domain
+  let slug = ""
+  if (!isRoot && !isVercel) {
+    slug = hostname
+    if (hostname.endsWith(`.${rootDomain}`)) {
+      slug = hostname.replace(`.${rootDomain}`, "")
+    }
+  }
+
   // 0. Prevent redirect loops from internal rewrites
-  if (request.headers.get("x-internal-rewrite")) {
+  if (request.headers.get("x-internal-rewrite") === "true") {
     return NextResponse.next()
   }
 
@@ -30,16 +39,15 @@ export async function middleware(request: NextRequest) {
 
   if (isAdminRoute || isSuperAdminRoute) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
-    console.log(`[Middleware] Auth Check - Path: ${url.pathname}, Host: ${hostname}, Token: ${!!token}, Role: ${token?.role}`)
     
     if (!token) {
       let signInUrl: URL
       if (isSuperAdminRoute) {
         signInUrl = new URL("/super-admin/signin", request.url)
       } else {
-        const match = url.pathname.match(/^\/([^/]+)\/admin(\/.*)?$/)
-        const slug = match ? match[1] : (!isRoot && !isVercel ? hostname : "")
-        const signInPath = slug ? `/${slug}/auth/signin` : "/default/auth/signin"
+        // Construct sign-in path using the extracted slug
+        const effectiveSlug = slug || (url.pathname.match(/^\/([^/]+)\/admin(\/.*)?$/)?.[1]) || "default"
+        const signInPath = `/${effectiveSlug}/auth/signin`
         signInUrl = new URL(signInPath, request.url)
       }
       signInUrl.searchParams.set("callbackUrl", request.url)
@@ -74,26 +82,15 @@ export async function middleware(request: NextRequest) {
     !isRoot &&
     !isVercel &&
     !isNextInternal &&
-    !isExcludedPath
+    !isExcludedPath &&
+    slug && 
+    slug !== "www"
   ) {
-    let slug = hostname
-
-    // If it's a subdomain of the root domain, extract the prefix
-    if (hostname.endsWith(`.${rootDomain}`)) {
-      slug = hostname.replace(`.${rootDomain}`, "")
-    }
-
-    // Don't rewrite if slug is 'www'
-    if (slug === "www") {
-      return NextResponse.next()
-    }
-
     // REDIRECT: If the pathname starts with the slug, redirect to the clean version
-    // e.g., vellion.flairecosystem.com/vellion/products -> /products
-    if (url.pathname.startsWith(`/${slug}`)) {
+    // STRICTOR CHECK: We check if it starts with /slug/ or is exactly /slug
+    if (url.pathname === `/${slug}` || url.pathname.startsWith(`/${slug}/`)) {
       const cleanPath = url.pathname.replace(`/${slug}`, "") || "/"
       const redirectUrl = new URL(cleanPath, request.url)
-      // Preserving search params
       url.searchParams.forEach((value, key) => {
         redirectUrl.searchParams.set(key, value)
       })
@@ -102,8 +99,9 @@ export async function middleware(request: NextRequest) {
     }
 
     const rewriteUrl = new URL(`/${slug}${url.pathname}`, request.url)
-    console.log(`[Middleware] Subdomain Rewrite - From: ${url.pathname}, To: /${slug}${url.pathname}`)
+    console.log(`[Middleware] Subdomain Rewrite - Host: ${hostname}, Path: ${url.pathname} -> /${slug}${url.pathname}`)
     
+    // Create response with internal rewrite header to prevent loops
     const responseHeaders = new Headers(request.headers)
     responseHeaders.set("x-internal-rewrite", "true")
     
