@@ -47,7 +47,7 @@ function SuperAdminSignInForm() {
             if (result?.error) {
                 setError("Invalid email or password")
             } else {
-                router.push(callbackUrl)
+                router.push("/super-admin")
                 router.refresh()
             }
         } catch {
