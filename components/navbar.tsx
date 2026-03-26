@@ -76,6 +76,12 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
               >
                 Collections
               </Link>
+              <Link
+                href={getStoreUrl(companySlug, "/help")}
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
+                Help
+              </Link>
               {session && (
                 <Link
                   href={getStoreUrl(companySlug, "/account")}
@@ -135,6 +141,12 @@ export function Navbar({ companySlug, companyName, companyLogo }: NavbarProps) {
               className="block text-sm font-medium py-2 hover:text-primary transition-colors"
             >
               Collections
+            </Link>
+            <Link
+              href={getStoreUrl(companySlug, "/help")}
+              className="block text-sm font-medium py-2 hover:text-primary transition-colors"
+            >
+              Help
             </Link>
             {session && (
               <Link

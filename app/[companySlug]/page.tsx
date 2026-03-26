@@ -192,6 +192,11 @@ function StoreLandingContent({ companySlug }: { companySlug: string }) {
                                         </Link>
                                     </li>
                                     <li>
+                                        <Link href={getStoreUrl(companySlug, "/help")} className="hover:text-primary">
+                                            Manual
+                                        </Link>
+                                    </li>
+                                    <li>
                                         <Link href={getStoreUrl(companySlug, "/")} className="hover:text-primary">
                                             Contact
                                         </Link>
